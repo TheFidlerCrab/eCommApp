@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+    }
+
+    .user-dashboard {
+        width: 90%;
+        margin: 20px auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        color: #4a4a8a;
+        margin-bottom: 10px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    th, td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background: #4a4a8a;
+        color: white;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 8px 12px;
+        background: #4a4a8a;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        text-align: center;
+        font-size: 0.9em;
+    }
+
+    .btn:hover {
+        background: #6a6ab0;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    li {
+        margin: 10px 0;
+        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    section {
+        margin-bottom: 20px;
+    }
+
+    p {
+        font-size: 1.1em;
+        margin-bottom: 10px;
+    }
+</style>
+
+<div class="user-dashboard">
+    <section id="account-info">
+        <h2>Account Information</h2>
+        <p><strong>Name:</strong> {{ user.name }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+    </section>
+
+    <section id="order-history">
+        <h2>Order History</h2>
+        {% if orders %}
+        <table>
+            <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Actions</th>
+            </tr>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>{{ order.date }}</td>
+                <td>${{ order.total }}</td>
+                <td>
+                    <a href="{{ url_for('view_order_items', order_id=order.id) }}" class="btn">View Items</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>No orders found.</p>
+        {% endif %}
+    </section>
+
+    <section id="purchased-vendors">
+        <h2>Purchased from Vendors</h2>
+        <ul>
+            {% for vendor in vendors %}
+                <li>{{ vendor.name }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+</div>
+{% endblock %}

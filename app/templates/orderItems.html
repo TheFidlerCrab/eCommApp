@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+    }
+
+    .order-items {
+        width: 90%;
+        margin: 20px auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        color: #4a4a8a;
+        margin-bottom: 10px;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    li {
+        display: flex;
+        align-items: center;
+        margin: 10px 0;
+        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .product-image {
+        width: 100px;
+        height: auto;
+        margin-right: 15px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 8px 12px;
+        background: #4a4a8a;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        text-align: center;
+        font-size: 0.9em;
+    }
+
+    .btn:hover {
+        background: #6a6ab0;
+    }
+
+    p {
+        font-size: 1.1em;
+        margin-bottom: 10px;
+    }
+</style>
+
+<div class="order-items">
+    <h2>Order Items</h2>
+    <p><strong>Order Number:</strong> {{ order_id }}</p>
+    <ul>
+        {% for item in order_items %}
+            <li>
+                <img src="{{ item.image_url }}" alt="{{ item.product_name }}" class="product-image">
+                <div>
+                    <strong>{{ item.product_name }}</strong><br>
+                    Quantity: {{ item.quantity }}<br>
+                    Price: ${{ item.price }}
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('user_dashboard') }}" class="btn">Back to Dashboard</a>
+</div>
+{% endblock %}
