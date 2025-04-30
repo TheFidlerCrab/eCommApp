@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+    }
+
+    .vendor-dashboard {
+        width: 90%;
+        margin: 20px auto;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        color: #4a4a8a;
+        margin-bottom: 10px;
+    }
+
+    .table-container {
+        margin-bottom: 20px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    th, td {
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background: #4a4a8a;
+        color: white;
+    }
+
+    button, .btn {
+        padding: 8px 12px;
+        background: #4a4a8a;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 0.9em;
+        text-decoration: none;
+    }
+
+    button:hover, .btn:hover {
+        background: #6a6ab0;
+    }
+
+    .revenue {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin: 20px 0;
+        text-align: center;
+        color: #333;
+    }
+
+    label {
+        display: block;
+        margin-top: 10px;
+        font-weight: bold;
+    }
+
+    input[type="text"], input[type="number"], input[type="file"] {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    form button {
+        margin-top: 15px;
+    }
+</style>
+
+<div class="vendor-dashboard">
+    <p>Signed in as: {{ vendor_name }}</p>
+
+    <div class="revenue">
+        Total Revenue: ${{ total_revenue }}
+    </div>
+
+    <div class="table-container">
+        <h2>Your Items</h2>
+        {% if items %}
+        <table>
+            <tr>
+                <th>Item ID</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Stock</th>
+            </tr>
+            {% for item in items %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ item.name }}</td>
+                <td>${{ item.price }}</td>
+                <td>{{ item.stock }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>No items found.</p>
+        {% endif %}
+    </div>
+
+    <div class="table-container">
+        <h2>Orders</h2>
+        {% if orders %}
+        <table>
+            <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Total</th>
+            </tr>
+            {% for order in orders[:10] %}
+            <tr>
+                <td>{{ order.id }}</td>
+                <td>{{ order.date }}</td>
+                <td>${{ order.total }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% if orders|length > 10 %}
+        <form method="GET" action="{{ url_for('view_more_orders') }}">
+            <button>View More</button>
+        </form>
+        {% endif %}
+        {% else %}
+        <p>No orders found.</p>
+        {% endif %}
+    </div>
+
+    <div class="table-container">
+        <h2>Add New Item</h2>
+        <form method="POST" action="{{ url_for('add_item') }}" enctype="multipart/form-data">
+            <label for="name">Item Name:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="price">Price:</label>
+            <input type="number" id="price" name="price" step="0.01" required>
+            <label for="stock">Stock:</label>
+            <input type="number" id="stock" name="stock" required>
+            <label for="image">Image:</label>
+            <input type="file" id="image" name="image" accept="image/*" required>
+            <button type="submit">Add Item</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

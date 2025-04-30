@@ -2,10 +2,13 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My site{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/userDash.css') }}">
+    {% block extra_css %}{% endblock %}
     <link rel= "stylesheet" type= "text/css" href= "/static/style/styles.css">
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-    <title>My site</title>
   </head>
 
   <body>
