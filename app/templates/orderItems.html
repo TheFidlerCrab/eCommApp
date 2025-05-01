@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #ffffff; /* White background */
+        margin: 0;
+        padding: 0;
+    }
+
+    .order-items {
+        width: 90%;
+        margin: 20px auto;
+        background: #ffffff; /* White background */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        color: #ff6600; /* Orange text */
+        margin-bottom: 15px;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    li {
+        display: flex;
+        align-items: center;
+        margin: 10px 0;
+        padding: 10px;
+        background-color: #f9f9f9; /* Light grey background */
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .product-image {
+        width: 100px;
+        height: auto;
+        margin-right: 15px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 10px 15px;
+        background: #ff6600; /* Orange background */
+        color: #ffffff; /* White text */
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 0.9em;
+        font-weight: bold;
+        text-align: center;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn:hover {
+        background: #cc5200; /* Darker orange */
+    }
+
+    p {
+        font-size: 1.1em;
+        margin-bottom: 10px;
+        color: #333; /* Black text */
+    }
+</style>
+
+<div class="order-items">
+    <h2>Order Items</h2>
+    <p><strong>Order Number:</strong> {{ order_id }}</p>
+    <ul>
+        {% for item in order_items %}
+            <li>
+                <img src="{{ item.image_url }}" alt="{{ item.product_name }}" class="product-image">
+                <div>
+                    <strong>{{ item.product_name }}</strong><br>
+                    Quantity: {{ item.quantity }}<br>
+                    Price: ${{ item.price }}
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('user_dashboard') }}" class="btn">Back to Dashboard</a>
+</div>
+{% endblock %}
