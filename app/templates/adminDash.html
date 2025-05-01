@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #ffffff; /* White background */
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #ff6600; /* Orange background */
+            color: #ffffff; /* White text */
+            padding: 15px 20px;
+            text-align: center;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .table-container {
+            width: 90%;
+            margin: 20px auto;
+            background: #ffffff; /* White background */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #ff6600; /* Orange text */
+            margin-bottom: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #ff6600; /* Orange background */
+            color: #ffffff; /* White text */
+        }
+
+        td {
+            color: #333; /* Black text */
+        }
+
+        button {
+            padding: 10px 15px;
+            background: #ff6600; /* Orange background */
+            color: #ffffff; /* White text */
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background: #cc5200; /* Darker orange */
+        }
+
+        p {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #333; /* Black text */
+        }
+
+        .no-data {
+            text-align: center;
+            color: #666; /* Grey text */
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>Admin Dashboard</header>
+    <p>Signed in as: {{ admin_username }}</p>
+    <div class="table-container">
+        <h2>Pending Account Requests</h2>
+        {% if account_requests %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Store Name</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for request in account_requests %}
+                <tr>
+                    <td>{{ request.username }}</td>
+                    <td>{{ request.email }}</td>
+                    <td>{{ request.role }}</td>
+                    <td>{{ request.store_name or 'N/A' }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('update_request', request_id=request.id) }}">
+                            <button type="submit" name="action" value="approve">Approve</button>
+                            <button type="submit" name="action" value="reject">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="no-data">No pending requests.</p>
+        {% endif %}
+    </div>
+
+    <div class="table-container">
+        <h2>Vendors</h2>
+        {% if vendors %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vendor in vendors[:10] %}
+                <tr>
+                    <td>{{ vendor.id }}</td>
+                    <td>{{ vendor.username }}</td>
+                    <td>{{ vendor.email }}</td>
+                    <td>{{ vendor.status }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('remove_vendor', vendor_id=vendor.id) }}">
+                            <button name="action" value="remove">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if vendors|length > 10 %}
+        <form method="GET" action="{{ url_for('view_more_vendors') }}">
+            <button>View More</button>
+        </form>
+        {% endif %}
+        {% else %}
+        <p class="no-data">No vendors available.</p>
+        {% endif %}
+    </div>
+
+    <div class="table-container">
+        <h2>Users</h2>
+        {% if users %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users[:10] %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.status }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('remove_user', user_id=user.id) }}">
+                            <button name="action" value="remove">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if users|length > 10 %}
+        <form method="GET" action="{{ url_for('view_more_users') }}">
+            <button>View More</button>
+        </form>
+        {% endif %}
+        {% else %}
+        <p class="no-data">No users available.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

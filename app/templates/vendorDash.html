@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #ffffff; /* White background */
+        margin: 0;
+        padding: 0;
+    }
+
+    .vendor-dashboard {
+        width: 90%;
+        margin: 20px auto;
+        background: #ffffff; /* White background */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+        color: #ff6600; /* Orange text */
+        margin-bottom: 15px;
+    }
+
+    .table-container {
+        margin-bottom: 20px;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    th, td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background: #ff6600; /* Orange background */
+        color: #ffffff; /* White text */
+    }
+
+    td {
+        color: #333; /* Black text */
+    }
+
+    button, .btn {
+        padding: 10px 15px;
+        background: #ff6600; /* Orange background */
+        color: #ffffff; /* White text */
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 0.9em;
+        font-weight: bold;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover, .btn:hover {
+        background: #cc5200; /* Darker orange */
+    }
+
+    .revenue {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin: 20px 0;
+        text-align: center;
+        color: #333; /* Black text */
+    }
+
+    label {
+        display: block;
+        margin-top: 10px;
+        font-weight: bold;
+        color: #333; /* Black text */
+    }
+
+    input[type="text"], input[type="number"], input[type="file"] {
+        width: 100%;
+        padding: 12px;
+        margin-top: 5px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        background-color: #f9f9f9; /* Light grey background */
+    }
+
+    input:focus {
+        border-color: #ff6600; /* Orange border */
+        outline: none;
+        background-color: #fff; /* White background */
+    }
+
+    form button {
+        margin-top: 15px;
+    }
+
+    .no-data {
+        text-align: center;
+        color: #666; /* Grey text */
+        font-size: 1.2em;
+        margin-top: 20px;
+    }
+</style>
+
+<div class="vendor-dashboard">
+    <p>Signed in as: {{ vendor_name }}</p>
+
+    <div class="revenue">
+        Total Revenue: ${{ total_revenue }}
+    </div>
+
+    <div class="table-container">
+        <h2>Your Items</h2>
+        {% if items %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Item ID</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>${{ item.price }}</td>
+                    <td>{{ item.stock }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="no-data">No items found.</p>
+        {% endif %}
+    </div>
+
+    <div class="table-container">
+        <h2>Orders</h2>
+        {% if orders %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders[:10] %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.date }}</td>
+                    <td>${{ order.total }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if orders|length > 10 %}
+        <form method="GET" action="{{ url_for('view_more_orders') }}">
+            <button>View More</button>
+        </form>
+        {% endif %}
+        {% else %}
+        <p class="no-data">No orders found.</p>
+        {% endif %}
+    </div>
+
+    <div class="table-container">
+        <h2>Add New Item</h2>
+        <form method="POST" action="{{ url_for('add_item') }}" enctype="multipart/form-data">
+            <label for="name">Item Name:</label>
+            <input type="text" id="name" name="name" required>
+            <label for="price">Price:</label>
+            <input type="number" id="price" name="price" step="0.01" required>
+            <label for="stock">Stock:</label>
+            <input type="number" id="stock" name="stock" required>
+            <label for="image">Image:</label>
+            <input type="file" id="image" name="image" accept="image/*" required>
+            <button type="submit">Add Item</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
