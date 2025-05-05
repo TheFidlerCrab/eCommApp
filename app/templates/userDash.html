@@ -2,49 +2,43 @@
 
 {% block content %}
 <style>
-    body {
+    .user-dashboard {
         font-family: 'Roboto', sans-serif;
         background-color: #ffffff; /* White background */
-        margin: 0;
-        padding: 0;
-    }
-
-    .user-dashboard {
         width: 90%;
         margin: 20px auto;
-        background: #ffffff; /* White background */
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
 
-    h2 {
+    .user-dashboard h2 {
         color: #ff6600; /* Orange text */
         margin-bottom: 15px;
     }
 
-    table {
+    .user-dashboard table {
         width: 100%;
         border-collapse: collapse;
         margin-top: 10px;
     }
 
-    th, td {
+    .user-dashboard th, .user-dashboard td {
         padding: 12px;
         text-align: left;
         border-bottom: 1px solid #ddd;
     }
 
-    th {
+    .user-dashboard th {
         background: #ff6600; /* Orange background */
         color: #ffffff; /* White text */
     }
 
-    td {
+    .user-dashboard td {
         color: #333; /* Black text */
     }
 
-    .btn {
+    .user-dashboard .btn {
         display: inline-block;
         padding: 10px 15px;
         background: #ff6600; /* Orange background */
@@ -57,16 +51,16 @@
         transition: background-color 0.3s ease;
     }
 
-    .btn:hover {
+    .user-dashboard .btn:hover {
         background: #cc5200; /* Darker orange */
     }
 
-    ul {
+    .user-dashboard ul {
         list-style-type: none;
         padding: 0;
     }
 
-    li {
+    .user-dashboard li {
         margin: 10px 0;
         padding: 10px;
         background-color: #f9f9f9; /* Light grey background */
@@ -74,25 +68,25 @@
         border-radius: 4px;
     }
 
-    section {
+    .user-dashboard section {
         margin-bottom: 20px;
     }
 
-    p {
+    .user-dashboard p {
         font-size: 1.1em;
         margin-bottom: 10px;
         color: #333; /* Black text */
     }
 
-    .search-container {
+    .user-dashboard .search-container {
         display: flex;
         align-items: center;
         margin-bottom: 20px;
         gap: 10px;
     }
 
-    .search-container select,
-    .search-container input {
+    .user-dashboard .search-container select,
+    .user-dashboard .search-container input {
         padding: 12px;
         border: 1px solid #ddd;
         border-radius: 5px;
@@ -100,18 +94,18 @@
         background-color: #f9f9f9; /* Light grey background */
     }
 
-    .search-container select:focus,
-    .search-container input:focus {
+    .user-dashboard .search-container select:focus,
+    .user-dashboard .search-container input:focus {
         border-color: #ff6600; /* Orange border */
         outline: none;
         background-color: #fff; /* White background */
     }
 
-    .search-container .btn {
+    .user-dashboard .search-container .btn {
         padding: 10px 15px;
     }
 
-    .featured-btn {
+    .user-dashboard .featured-btn {
         display: inline-block;
         margin-top: 20px;
         padding: 12px 20px;
@@ -125,7 +119,7 @@
         transition: background-color 0.3s ease;
     }
 
-    .featured-btn:hover {
+    .user-dashboard .featured-btn:hover {
         background: #cc5200; /* Darker orange */
     }
 </style>

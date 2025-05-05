@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Store</title>
+</head>
+<body>
+    <h1>Store Items</h1>
+    {% if items %}
+    <ul>
+        {% for item in items %}
+        <li>
+            <strong>{{ item.name }}</strong> - ${{ item.price }}
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No items found.</p>
+    {% endif %}
+    <a href="{{ url_for('user_dashboard') }}">Back to Dashboard</a>
+</body>
+</html>

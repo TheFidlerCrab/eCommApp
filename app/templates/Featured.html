@@ -1,0 +1,287 @@
+{% extends"base.html" %}
+{% block content %}
+<head>
+<link rel="stylesheet" href="/eCommApp/static/home.css">
+<script>
+    function toggleDescription(button) {
+        const fullDescription = button.previousElementSibling;
+
+        if (fullDescription.style.display === "none" || fullDescription.style.display === "") {
+            fullDescription.style.display = "inline";
+            button.textContent = "Read Less";
+        } else {
+            fullDescription.style.display = "none";
+            button.textContent = "Read More";
+        }
+    }
+</script>
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        background-color: #f1f1f1; /* Updated to match the design */
+        margin: 0;
+        padding: 0;
+        color: #333;
+    }
+
+    h2 {
+        font-size: 28px;
+        color: #343a40;
+        margin-bottom: 10px;
+    }
+
+    p {
+        font-size: 16px;
+        line-height: 1.6;
+    }
+
+    .featured-products, .quality-price-products {
+        text-align: center;
+        padding: 40px 20px;
+        background-color: #ffffff;
+        margin: 20px auto;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-list {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 30px;
+        margin-top: 20px;
+    }
+
+    .product-item {
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 20px;
+        width: 280px;
+        text-align: center;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .product-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    .product-item img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+
+    .product-item h3 {
+        font-size: 20px;
+        margin: 10px 0;
+        color: #ff9900;
+    }
+
+    .product-item h3:hover {
+        text-decoration: underline;
+    }
+
+    .product-item p {
+        font-size: 14px;
+        color: #555;
+        margin-bottom: 15px;
+    }
+
+    .product-item .price {
+        font-size: 18px;
+        font-weight: bold;
+        color: #28a745;
+        margin: 10px 0;
+    }
+
+    .product-item .price .cents {
+        font-size: 14px;
+        vertical-align: super;
+    }
+
+    .btn-buy {
+        background-color: #ffa200;
+        color: #ffffff;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.3s;
+    }
+
+    .btn-buy:hover {
+        background-color: #b35c00;
+    }
+
+    .btn-read-more {
+        background: none;
+        border: none;
+        color: #ff4500;
+        cursor: pointer;
+        font-size: 14px;
+        text-decoration: underline;
+        padding: 0;
+        transition: color 0.3s;
+    }
+
+    .btn-read-more:hover {
+        color: #ff6347;
+    }
+
+    .quality-price-products {
+        background-color: #f1f1f1;
+    }
+
+    .quality-price-products h2 {
+        color: #495057;
+    }
+
+    .quality-price-products .product-item {
+        background: #ffffff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 20px;
+        width: 280px;
+        text-align: center;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .quality-price-products .product-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+</style>
+</head>
+<div class="featured-products">
+    <h1>Welcome to our featured items</h1>
+    <h2>Alpinestars Collection</h2>
+    <p>Featured and Premium Options from Alpinestars</p>
+    <div class="product-list">
+        <div class="product-item">
+            <img src="{{ url_for('static', filename='images/Black helmethelmet.jpg') }}" alt="Helmet">
+            <h3>Alpinestars Supertech R10 Carbon Helmet</h3>
+            <p> 
+                <span class="short-description">The Supertech R10 is Alpinestars' first full-face helmet, designed for MotoGP riders and enthusiasts...</span>
+                <span class="full-description" style="display: none;"> It features a carbon shell for lightweight performance, advanced aerodynamics for stability, and a comfortable fit for long rides. This helmet is the pinnacle of racing technology.</span>
+                <button class="btn-read-more" onclick="toggleDescription(this)">Read More</button>
+            </p>
+            <p class="price">$999<span class="cents">.95</span></p>
+            <button class="btn-buy">Add to cart</button>
+        </div>
+        <div class="product-item">
+            <img src="{{ url_for('static', filename='images/jacket.jpg') }}" alt="Jacket">
+            <h3>Alpinestars GP Plus R V4 Rideknit Jacket</h3>
+            <p> 
+                <span class="short-description">The GP Plus R V4 Rideknit Jacket combines premium protection with a lightweight, breathable design...</span>
+                <span class="full-description" style="display: none;"> Featuring CE-certified armor, Rideknit stretch panels for flexibility, and a sleek design, this jacket is perfect for sport riders seeking comfort and safety.</span>
+                <button class="btn-read-more" onclick="toggleDescription(this)">Read More</button>
+            </p>
+            <p class="price">$649<span class="cents">.95</span></p>
+            <button class="btn-buy">Add to cart</button>
+        </div>
+        <div class="product-item">
+            <img src="{{ url_for('static', filename='images/gp premium gloves.jpg') }}" alt="Gloves">
+            <h3>Alpinestars GP Tech v2 Gloves</h3>
+            <p> 
+                <span class="short-description">The GP Tech v2 Gloves are designed for professional riders, offering top-tier protection...</span>
+                <span class="full-description" style="display: none;"> With advanced knuckle protection, premium leather construction, and excellent ventilation, these gloves ensure safety and comfort during high-speed rides.</span>
+                <button class="btn-read-more" onclick="toggleDescription(this)">Read More</button>
+            </p>
+            <p class="price">$394<span class="cents">.95</span></p>
+            <button class="btn-buy">Add to cart</button>
+        </div>
+        <div class="product-item">
+            <img src="{{ url_for('static', filename='images/Premium pants.jpg') }}" alt="Premium Riding Pants">
+            <h3>Alpinestars Missile V3 Leather Pants</h3>
+            <p>
+                <span class="short-description">The Missile V3 Leather Pants offer top-tier protection and performance for track and street riders...</span>
+                <span class="full-description" style="display: none;"> These pants feature premium leather construction, CE-certified armor, and stretch panels for flexibility. Designed for aggressive riders, they ensure safety and comfort during high-speed rides.</span>
+                <button class="btn-read-more" onclick="toggleDescription(this)">Read More</button>
+            </p>
+            <p class="price">$499<span class="cents">.95</span></p>
+            <button class="btn-buy">Add to cart</button>
+        </div>
+        <div class="product-item">
+            <img src="{{ url_for('static', filename='images/premium boots.jpg') }}" alt="Boots">
+            <h3>Alpinestars Supertech R Boots</h3>
+            <p> 
+                <span class="short-description">The Supertech R Boots are the ultimate choice for professional racers and sport riders...</span>
+                <span class="full-description" style="display: none;"> These boots feature advanced ankle protection, a lightweight design, and superior grip for maximum performance on the track.</span>
+                <button class="btn-read-more" onclick="toggleDescription(this)">Read More</button>
+            </p>
+            <p class="price">$589<span class="cents">.95</span></p>
+            <button class="btn-buy">Add to cart</button>
+        </div>
+    </div>
+</div>
+
+<div class="quality-price-products">
+    <h2>Quality for the Price</h2>
+    <p>Affordable and reliable gear options for all riders.</p>
+    <div class="product-list">
+        <div class="product-item">
+            <img src="{{ url_for('static', filename='images/HJC cheaper helmet option.jpg') }}" alt="Budget Helmet">
+            <h3>HJC i10</h3>
+            <p> 
+                <span class="short-description">The HJC i10 Helmet offers excellent value with advanced ventilation and a lightweight design...</span>
+                <span class="full-description" style="display: none;"> It features a polycarbonate shell, a moisture-wicking liner, and DOT certification, making it a reliable choice for everyday riders.</span>
+                <button class="btn-read-more" onclick="toggleDescription(this)">Read More</button>
+            </p>
+            <p class="price">$174<span class="cents">.99</span></p>
+            <button class="btn-buy">Add to cart</button>
+        </div>
+        <div class="product-item">
+            <img src="{{ url_for('static', filename='images/revit cheap jacket.jpg') }}" alt="Budget Jacket">
+            <h3>REV'IT! Eclipse 2 Jacket</h3>
+            <p> 
+                <span class="short-description">The Eclipse 2 Jacket is a lightweight summer jacket with exceptional airflow...</span>
+                <span class="full-description" style="display: none;"> It features large mesh panels, CE-certified armor, and a minimalist design, making it ideal for warm-weather riding.</span>
+                <button class="btn-read-more" onclick="toggleDescription(this)">Read More</button>
+            </p>
+            <p class="price">$189<span class="cents">.99</span></p>
+            <button class="btn-buy">Add to cart</button>
+        </div>
+        <div class="product-item">
+            <img src="{{ url_for('static', filename='images/alpinestars reliable cheaper gloves.jpg') }}" alt="Budget Gloves">
+            <h3>Alpinestars SMX-2 Air Carbon v2 Gloves</h3>
+            <p> 
+                <span class="short-description">The SMX-2 Air Carbon v2 Gloves offer a sleek design with enhanced protection...</span>
+                <span class="full-description" style="display: none;"> These gloves feature carbon knuckle protection, durable leather construction, and excellent ventilation for everyday riding.</span>
+                <button class="btn-read-more" onclick="toggleDescription(this)">Read More</button>
+            </p>
+            <p class="price">$99<span class="cents">.95</span></p>
+            <button class="btn-buy">Add to cart</button>
+        </div>
+        <div class="product-item">
+            <img src="{{ url_for('static', filename='images/moto cheap pants.jpg') }}" alt="Budget Riding Pants">
+            <h3>REV'IT! Moto 2 Jeans</h3>
+            <p>
+                <span class="short-description">The REV'IT! Moto 2 Jeans combine casual style with motorcycle-ready protection...</span>
+                <span class="full-description" style="display: none;"> These jeans feature Cordura denim construction, CE-rated knee and hip armor, and a slim fit for a modern look. Perfect for riders who want safety without sacrificing style.</span>
+                <button class="btn-read-more" onclick="toggleDescription(this)">Read More</button>
+            </p>
+            <p class="price">$249<span class="cents">.95</span></p>
+            <button class="btn-buy">Add to cart</button>
+        </div>
+        <div class="product-item">
+            <img src="{{ url_for('static', filename='images/cheaper boot.jpg') }}" alt="Budget Boots">
+            <h3>REAX Fulton Air Riding Shoes</h3>
+            <p> 
+                <span class="short-description">The REAX Fulton Air Riding Shoes combine casual style with basic riding protection...</span>
+                <span class="full-description" style="display: none;"> Featuring Nubuck leather, triple-stitched construction, and perforated panels for airflow, these shoes are perfect for urban riders.</span>
+                <button class="btn-read-more" onclick="toggleDescription(this)">Read More</button>
+            </p>
+            <p class="price">$100<span class="cents">.00</span></p>
+            <button class="btn-buy">Add to cart</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+

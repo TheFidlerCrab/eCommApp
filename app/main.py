@@ -25,7 +25,7 @@ def allowed_file(filename):
 
 @app.route('/update_request/<int:request_id>', methods=['POST'])
 def update_request(request_id):
-    if 'loggedin' in session and session['userType'] == 1:  # Ensure admin is logged in
+    if 'loggedin' in session and session.get('userType') == 1:  # Use session.get to avoid KeyError
         action = request.form.get('action')
         account_request = db.session.execute(
             text("SELECT * FROM account_requests WHERE id = :id"),
@@ -34,21 +34,41 @@ def update_request(request_id):
 
         if account_request:
             if action == 'approve':
+                # Move account request into the users table
                 db.session.execute(
                     text(
-                        "INSERT INTO users (username, userPass, firstName, lastName, email, userPhone, ssnNum, userType) "
-                        "VALUES (:username, :userPass, :firstName, :lastName, :email, :userPhone, :ssnNum, 0)"
+                        "INSERT INTO users (username, userPass, email, userType) "
+                        "VALUES (:username, :userPass, :email, :userType)"
                     ),
                     {
                         "username": account_request['username'],
                         "userPass": account_request['userPass'],
-                        "firstName": account_request['firstName'],
-                        "lastName": account_request['lastName'],
                         "email": account_request['email'],
-                        "userPhone": account_request['userPhone'],
-                        "ssnNum": account_request['ssnNum']
+                        "userType": account_request['userType']  # Preserve user type (e.g., Customer or Vendor)
                     }
                 )
+                db.session.commit()  # Commit to generate the new user ID
+
+                # If the account is a vendor, insert into the vendors table
+                if account_request['userType'] == 2:
+                    new_vendor_id = db.session.execute(
+                        text("SELECT id FROM users WHERE username = :username"),
+                        {"username": account_request['username']}
+                    ).scalar()
+
+                    db.session.execute(
+                        text(
+                            "INSERT INTO vendors (id, name, logo_path) "
+                            "VALUES (:id, :name, :logo_path)"
+                        ),
+                        {
+                            "id": new_vendor_id,
+                            "name": account_request['store_name'],
+                            "logo_path": account_request['logo_path']
+                        }
+                    )
+
+                # Remove the account request after approval
                 db.session.execute(
                     text("DELETE FROM account_requests WHERE id = :id"),
                     {"id": request_id}
@@ -67,44 +87,69 @@ def update_request(request_id):
 
 @app.route('/admin_dashboard')
 def admin_dashboard():
-    if 'loggedin' in session and session['userType'] == 1:  # Ensure admin is logged in
-        account_requests = db.session.execute(
+    if 'loggedin' in session and session.get('userType') == 1:  # Use session.get to avoid KeyError
+        # Fetch all pending account requests (both customers and vendors)
+        pending_requests = db.session.execute(
             text("SELECT * FROM account_requests WHERE status = 'pending'")
         ).mappings().all()
+
+        # Fetch already approved customers
+        approved_customers = db.session.execute(
+            text("SELECT id, username, email FROM users WHERE userType = 0")
+        ).mappings().all()
+
+        # Fetch already approved vendors
+        approved_vendors = db.session.execute(
+            text("SELECT id, username, email FROM users WHERE userType = 2")
+        ).mappings().all()
+
         message = request.args.get('message', '')  # Retrieve message from query parameters
-        return render_template('adminDash.html', account_requests=account_requests, message=message)
+        return render_template(
+            'adminDash.html',
+            pending_requests=pending_requests,
+            approved_customers=approved_customers,
+            approved_vendors=approved_vendors,
+            message=message
+        )
     return redirect(url_for('login'))
 
 @app.route('/remove_vendor/<int:vendor_id>', methods=['POST'])
 def remove_vendor(vendor_id):
-    if 'loggedin' in session and session['userType'] == 1:  # Ensure admin is logged in
+    if 'loggedin' in session and session.get('userType') == 1:  # Ensure admin is logged in
+        # Remove vendor's products first to maintain database integrity
         db.session.execute(
-            text("DELETE FROM vendors WHERE id = :id"),
-            {"id": vendor_id}
+            text("DELETE FROM products WHERE vendorId = :vendor_id"),
+            {"vendor_id": vendor_id}
+        )
+        # Remove the vendor from the users table
+        db.session.execute(
+            text("DELETE FROM users WHERE id = :vendor_id AND userType = 2"),
+            {"vendor_id": vendor_id}
         )
         db.session.commit()
-        return redirect(url_for('admin_dashboard', message="Vendor removed"))
+        return redirect(url_for('admin_dashboard', message="Vendor removed successfully"))
     return redirect(url_for('login'))
 
 @app.route('/remove_user/<int:user_id>', methods=['POST'])
 def remove_user(user_id):
-    if 'loggedin' in session and session['userType'] == 1:  # Ensure admin is logged in
+    if 'loggedin' in session and session.get('userType') == 1:  # Ensure admin is logged in
+        # Remove the user from the users table
         db.session.execute(
-            text("DELETE FROM users WHERE id = :id"),
-            {"id": user_id}
+            text("DELETE FROM users WHERE id = :user_id AND userType = 0"),
+            {"user_id": user_id}
         )
         db.session.commit()
-        return redirect(url_for('admin_dashboard', message="User removed"))
+        return redirect(url_for('admin_dashboard', message="User removed successfully"))
     return redirect(url_for('login'))
 
 @app.route('/user/dashboard')
 def user_dashboard():
-    if 'loggedin' in session and session['userType'] == 0:  # Ensure user is logged in
+    if 'loggedin' in session and session.get('userType') == 0:  # Use session.get to avoid KeyError
         user_id = session['userId']  # Assuming user ID is stored in the session
 
         # Query to get user information
         user = db.session.execute(
-            text("SELECT firstName AS name, email FROM users WHERE id = :id"),
+            text("SELECT username AS name, email FROM users WHERE id = :id"),
             {"id": user_id}
         ).mappings().fetchone()
 
@@ -133,7 +178,7 @@ def user_dashboard():
 
 @app.route('/order/<int:order_id>/items')
 def view_order_items(order_id):
-    if 'loggedin' in session and session['userType'] == 0:  # Ensure user is logged in
+    if 'loggedin' in session and session.get('userType') == 0:  # Use session.get to avoid KeyError
         user_id = session['userId']  # Assuming user ID is stored in the session
 
         # Query to get items in the order, including image URL
@@ -155,8 +200,14 @@ def view_order_items(order_id):
 
 @app.route('/vendor/dashboard')
 def vendor_dashboard():
-    if 'loggedin' in session and session['userType'] == 2:  # Ensure vendor is logged in
+    if 'loggedin' in session and session.get('userType') == 2:  # Use session.get to avoid KeyError
         vendor_id = session['userId']  # Assuming vendor ID is stored in the session
+
+        # Query to get vendor's store name
+        vendor_store_name = db.session.execute(
+            text("SELECT name FROM vendors WHERE id = :vendor_id"),
+            {"vendor_id": vendor_id}
+        ).scalar()
 
         # Query to get vendor's items
         items = db.session.execute(
@@ -188,14 +239,37 @@ def vendor_dashboard():
             {"vendor_id": vendor_id}
         ).scalar()
 
-        return render_template('vendorDash.html', vendor_name=session['username'], items=items, orders=orders, total_revenue=total_revenue or 0)
+        # Query to get vendor's logo path
+        vendor_logo = db.session.execute(
+            text("SELECT logo_path FROM users WHERE id = :vendor_id"),
+            {"vendor_id": vendor_id}
+        ).scalar()
+
+        return render_template(
+            'vendorDash.html',
+            vendor_name=vendor_store_name,  # Pass the store name instead of the username
+            items=items,
+            orders=orders,
+            total_revenue=total_revenue or 0,
+            vendor_logo=vendor_logo  # Pass the logo path to the template
+        )
 
     return redirect(url_for('login'))
 
 @app.route('/add_item', methods=['POST'])
 def add_item():
-    if 'loggedin' in session and session['userType'] == 2:  # Ensure vendor is logged in
+    if 'loggedin' in session and session.get('userType') == 2:  # Use session.get to avoid KeyError
         vendor_id = session['userId']  # Assuming vendor ID is stored in the session
+
+        # Verify that the vendor exists in the users table
+        vendor_exists = db.session.execute(
+            text("SELECT id FROM users WHERE id = :vendor_id AND userType = 2"),
+            {"vendor_id": vendor_id}
+        ).scalar()
+
+        if not vendor_exists:
+            return redirect(url_for('vendor_dashboard', message="Vendor does not exist"))
+
         name = request.form['name']
         price = request.form['price']
         stock = request.form['stock']
@@ -217,13 +291,13 @@ def add_item():
             )
             db.session.commit()
 
-            return redirect(url_for('vendor_dashboard'))
+            return redirect(url_for('vendor_dashboard', message="Item added successfully"))
 
     return redirect(url_for('login'))
 
 @app.route('/view_more_orders')
 def view_more_orders():
-    if 'loggedin' in session and session['userType'] == 2:  # Ensure vendor is logged in
+    if 'loggedin' in session and session.get('userType') == 2:  # Use session.get to avoid KeyError
         vendor_id = session['userId']  # Assuming vendor ID is stored in the session
 
         # Query to get all vendor's orders
@@ -243,6 +317,37 @@ def view_more_orders():
 
     return redirect(url_for('login'))
 
+@app.route('/store', methods=['GET'])
+def store():
+    vendor_id = request.args.get('vendor_id')
+    vendor_name = request.args.get('vendor_name')
+
+    if vendor_id:
+        # Query items by vendor ID
+        items = db.session.execute(
+            text("SELECT * FROM products WHERE vendorId = :vendor_id"),
+            {"vendor_id": vendor_id}
+        ).mappings().all()
+    elif vendor_name:
+        # Query items by vendor name
+        items = db.session.execute(
+            text("""
+                SELECT p.* 
+                FROM products p
+                JOIN vendors v ON p.vendorId = v.id
+                WHERE v.name LIKE :vendor_name
+            """),
+            {"vendor_name": f"%{vendor_name}%"}
+        ).mappings().all()
+    else:
+        items = []
+
+    return render_template('store.html', items=items)
+
+@app.route('/featured')
+def featured():
+    return render_template('Featured.html')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -259,7 +364,7 @@ def login():
             session['loggedin'] = True
             session['userId'] = user['id']
             session['username'] = user['username']
-            session['userType'] = user['userType']  # 0: User, 1: Admin, 2: Vendor
+            session['userType'] = user['userType']  # Ensure this is set correctly
 
             # Redirect based on user type
             if user['userType'] == 0:
@@ -276,34 +381,54 @@ def login():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        email = request.form['email']
+        userType = request.form.get('userType')  # Dropdown to select user type
         username = request.form['username']
+        email = request.form['email']
         password = request.form['password']
         confirm_password = request.form['confirm_password']
-        role = request.form['role']
-        store_name = request.form.get('store_name')
-        store_logo = request.files.get('store_logo')
+
+        # Validate user type
+        if userType == 'Customer':
+            userType = 0  # Customer
+        elif userType == 'Vendor':
+            userType = 2  # Vendor
+        else:
+            return render_template('signup.html', error="Invalid user type selected")
+
+        # Additional fields for vendors
+        store_name = request.form.get('store_name') if userType == 2 else None
+        logo_file = request.files.get('store_logo') if userType == 2 else None
+        logo_path = None
+
+        if userType == 2 and logo_file and allowed_file(logo_file.filename):
+            vendor_upload_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'logos')
+            os.makedirs(vendor_upload_folder, exist_ok=True)  # Ensure the directory exists
+            logo_filename = f"{username}_{logo_file.filename}"  # Create a unique filename
+            logo_path = os.path.join(vendor_upload_folder, logo_filename)
+            logo_file.save(logo_path)  # Save the file to the specified path
+            logo_path = f"/static/uploads/logos/{logo_filename}"  # Save the relative path for database storage
 
         if password != confirm_password:
             return render_template('signup.html', error="Passwords do not match")
 
-        # Insert account request into the database
+        # Insert account request into the database for admin approval
         db.session.execute(
             text("""
-                INSERT INTO account_requests (username, userPass, email, role, store_name, status)
-                VALUES (:username, :password, :email, :role, :store_name, 'pending')
+                INSERT INTO account_requests (username, userPass, email, userType, store_name, logo_path, status)
+                VALUES (:username, :password, :email, :userType, :store_name, :logo_path, 'pending')
             """),
             {
                 "username": username,
                 "password": password,
                 "email": email,
-                "role": role,
-                "store_name": store_name
+                "userType": userType,
+                "store_name": store_name,
+                "logo_path": logo_path
             }
         )
         db.session.commit()
 
-        return redirect(url_for('login', message="Account request submitted for approval"))
+        return redirect(url_for('login', message="Account request submitted for admin approval"))
 
     return render_template('signup.html')
 

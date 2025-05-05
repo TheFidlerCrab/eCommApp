@@ -86,29 +86,36 @@
 </head>
 <body>
     <header>Admin Dashboard</header>
-    <p>Signed in as: {{ admin_username }}</p>
+    <p>Signed in as: {{ session.username }}</p>
+
     <div class="table-container">
         <h2>Pending Account Requests</h2>
-        {% if account_requests %}
+        {% if pending_requests %}
         <table>
             <thead>
                 <tr>
                     <th>Username</th>
                     <th>Email</th>
-                    <th>Role</th>
+                    <th>User Type</th>
                     <th>Store Name</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% for request in account_requests %}
+                {% for request in pending_requests %}
                 <tr>
                     <td>{{ request.username }}</td>
                     <td>{{ request.email }}</td>
-                    <td>{{ request.role }}</td>
-                    <td>{{ request.store_name or 'N/A' }}</td>
                     <td>
-                        <form method="POST" action="{{ url_for('update_request', request_id=request.id) }}">
+                        {% if request.userType == 0 %}
+                        Customer
+                        {% elif request.userType == 2 %}
+                        Vendor
+                        {% endif %}
+                    </td>
+                    <td>{{ request.store_name if request.userType == 2 else 'N/A' }}</td>
+                    <td>
+                        <form action="{{ url_for('update_request', request_id=request.id) }}" method="post">
                             <button type="submit" name="action" value="approve">Approve</button>
                             <button type="submit" name="action" value="reject">Reject</button>
                         </form>
@@ -118,30 +125,60 @@
             </tbody>
         </table>
         {% else %}
-        <p class="no-data">No pending requests.</p>
+        <p class="no-data">No pending account requests.</p>
         {% endif %}
     </div>
 
     <div class="table-container">
-        <h2>Vendors</h2>
-        {% if vendors %}
+        <h2>Approved Customers</h2>
+        {% if approved_customers %}
         <table>
             <thead>
                 <tr>
                     <th>ID</th>
                     <th>Username</th>
                     <th>Email</th>
-                    <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% for vendor in vendors[:10] %}
+                {% for customer in approved_customers %}
+                <tr>
+                    <td>{{ customer.id }}</td>
+                    <td>{{ customer.username }}</td>
+                    <td>{{ customer.email }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('remove_user', user_id=customer.id) }}">
+                            <button name="action" value="remove">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="no-data">No approved customers available.</p>
+        {% endif %}
+    </div>
+
+    <div class="table-container">
+        <h2>Approved Vendors</h2>
+        {% if approved_vendors %}
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vendor in approved_vendors %}
                 <tr>
                     <td>{{ vendor.id }}</td>
                     <td>{{ vendor.username }}</td>
                     <td>{{ vendor.email }}</td>
-                    <td>{{ vendor.status }}</td>
                     <td>
                         <form method="POST" action="{{ url_for('remove_vendor', vendor_id=vendor.id) }}">
                             <button name="action" value="remove">Remove</button>
@@ -151,52 +188,8 @@
                 {% endfor %}
             </tbody>
         </table>
-        {% if vendors|length > 10 %}
-        <form method="GET" action="{{ url_for('view_more_vendors') }}">
-            <button>View More</button>
-        </form>
-        {% endif %}
         {% else %}
-        <p class="no-data">No vendors available.</p>
-        {% endif %}
-    </div>
-
-    <div class="table-container">
-        <h2>Users</h2>
-        {% if users %}
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users[:10] %}
-                <tr>
-                    <td>{{ user.id }}</td>
-                    <td>{{ user.username }}</td>
-                    <td>{{ user.email }}</td>
-                    <td>{{ user.status }}</td>
-                    <td>
-                        <form method="POST" action="{{ url_for('remove_user', user_id=user.id) }}">
-                            <button name="action" value="remove">Remove</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% if users|length > 10 %}
-        <form method="GET" action="{{ url_for('view_more_users') }}">
-            <button>View More</button>
-        </form>
-        {% endif %}
-        {% else %}
-        <p class="no-data">No users available.</p>
+        <p class="no-data">No approved vendors available.</p>
         {% endif %}
     </div>
 </body>
