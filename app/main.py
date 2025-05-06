@@ -117,9 +117,22 @@ def admin_dashboard():
 @app.route('/remove_vendor/<int:vendor_id>', methods=['POST'])
 def remove_vendor(vendor_id):
     if 'loggedin' in session and session.get('userType') == 1:  # Ensure admin is logged in
-        # Remove vendor's products first to maintain database integrity
+        # Remove cart items referencing the vendor's products
+        db.session.execute(
+            text("""
+                DELETE FROM cart_items 
+                WHERE productId IN (SELECT id FROM products WHERE vendorId = :vendor_id)
+            """),
+            {"vendor_id": vendor_id}
+        )
+        # Remove vendor's products
         db.session.execute(
             text("DELETE FROM products WHERE vendorId = :vendor_id"),
+            {"vendor_id": vendor_id}
+        )
+        # Remove the vendor entry from the vendors table
+        db.session.execute(
+            text("DELETE FROM vendors WHERE id = :vendor_id"),
             {"vendor_id": vendor_id}
         )
         # Remove the vendor from the users table
@@ -253,7 +266,7 @@ def vendor_dashboard():
 
         # Query to get vendor's logo path
         vendor_logo = db.session.execute(
-            text("SELECT logo_path FROM users WHERE id = :vendor_id"),
+            text("SELECT logo_path FROM vendors WHERE id = :vendor_id"),
             {"vendor_id": vendor_id}
         ).scalar()
 
@@ -361,6 +374,48 @@ def store():
         vendor_info = None
 
     return render_template('store.html', items=items, vendor=vendor_info)
+
+@app.route('/add_to_cart/<int:product_id>', methods=['POST'])
+def add_to_cart(product_id):
+    if 'loggedin' in session and session.get('userType') == 0:  # Ensure user is logged in and is a customer
+        user_id = session['userId']  # Assuming user ID is stored in the session
+
+        # Add the product to the cart
+        db.session.execute(
+            text("""
+                INSERT INTO cart_items (userId, productId, quantity)
+                VALUES (:user_id, :product_id, 1)
+                ON DUPLICATE KEY UPDATE quantity = quantity + 1
+            """),
+            {"user_id": user_id, "product_id": product_id}
+        )
+        db.session.commit()
+
+        return redirect(url_for('store', vendor_id=request.args.get('vendor_id')))
+    return redirect(url_for('login'))
+
+@app.route('/cart')
+def cart():
+    if 'loggedin' in session and session.get('userType') == 0:  # Ensure user is logged in and is a customer
+        user_id = session['userId']  # Assuming user ID is stored in the session
+
+        # Query to get cart items for the user
+        cart_items = db.session.execute(
+            text("""
+                SELECT ci.quantity, p.name, p.price, p.image_url 
+                FROM cart_items ci
+                JOIN products p ON ci.productId = p.id
+                WHERE ci.userId = :user_id
+            """),
+            {"user_id": user_id}
+        ).mappings().all()
+
+        # Calculate total price
+        total_price = sum(item['quantity'] * item['price'] for item in cart_items)
+
+        return render_template('cart.html', cart_items=cart_items, total_price=total_price)
+
+    return redirect(url_for('login'))
 
 @app.route('/featured')
 def featured():

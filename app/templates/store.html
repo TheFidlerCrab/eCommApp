@@ -1,22 +1,104 @@
 {% extends "base.html" %}
 {% block content %}
-<body>
-    <h1>{{ vendor.name if vendor else "Store" }}</h1>
+<style>
+    .store-container {
+        font-family: 'Roboto', sans-serif;
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .store-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .store-header h1 {
+        font-size: 2em;
+        color: #333;
+    }
+
+    .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .product-card {
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        text-align: center;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .product-card img {
+        max-width: 100%;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 5px;
+        margin-bottom: 8px;
+    }
+
+    .product-card h2 {
+        font-size: 1em;
+        color: #333;
+        margin-bottom: 8px;
+    }
+
+    .product-card p {
+        font-size: 0.9em;
+        color: #666;
+        margin: 4px 0;
+    }
+
+    .product-card .btn {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 8px 12px;
+        background: #ff6600;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 0.9em;
+        font-weight: bold;
+        transition: background-color 0.3s ease;
+    }
+
+    .product-card .btn:hover {
+        background: #cc5200;
+    }
+</style>
+
+<div class="store-container">
+    <div class="store-header">
+        <h1>{{ vendor.name if vendor else "Store" }}</h1>
+    </div>
     <section>
         {% if items %}
-            <ul>
+            <div class="product-grid">
                 {% for item in items %}
-                    <li>
+                    <div class="product-card">
+                        <img src="{{ item.image_url }}" alt="{{ item.name }}">
                         <h2>{{ item.name }}</h2>
                         <p>Price: ${{ item.price }}</p>
                         <p>Stock: {{ item.stock }}</p>
-                        <img src="{{ item.image_url }}" alt="{{ item.name }}" style="max-width: 200px;">
-                    </li>
+                        <form method="POST" action="{{ url_for('add_to_cart', product_id=item.id) }}">
+                            <button type="submit" class="btn">Add to Cart</button>
+                        </form>
+                    </div>
                 {% endfor %}
-            </ul>
+            </div>
         {% else %}
-            <p>No products available for this vendor.</p>
+            <p style="text-align: center; font-size: 1.2em; color: #666;">No products available for this vendor.</p>
         {% endif %}
     </section>
-</body>
-{%endblock%}
+</div>
+{% endblock %}

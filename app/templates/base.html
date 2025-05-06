@@ -5,87 +5,112 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Holeshot Powersports{% endblock %}</title>
     <style>
-        body {
+        * {
             margin: 0;
-            font-family: 'Roboto', sans-serif;
-            background-color: #ffffff;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .topBar {
-            background-color: #000000; /* Black background */
-            color: #ffffff; /* White text */
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .topBar .logo {
-            font-size: 1.8em;
+        .Topbar {
+            background-color: black;
+            height: 100px;
+            color: white;
+            padding: 0 20px;
+            font-size: 24px;
             font-weight: bold;
-            color: #ff6600; /* Orange text */
-            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .topBar .nav-links {
+        .logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+        }
+
+        .topBarItems {
+            flex: 1;
             display: flex;
+            justify-content: center;
+        }
+
+        .searchbar {
+            width: 300px;
+            height: 40px;
+            border-radius: 50px;
+            border: none;
+            font-size: 16px;
+            background-color: white;
+            color: black;
+        }
+
+        .headerButtons {
+            display: flex;
+            align-items: center;
             gap: 20px;
         }
 
-        .topBar .nav-links a {
-            color: #ffffff; /* White text */
+        .headerItem {
+            color: rgb(235, 80, 0);
             text-decoration: none;
-            font-size: 1em;
-            font-weight: 500;
-            transition: color 0.3s ease;
+            font-weight: bold;
         }
 
-        .topBar .nav-links a:hover {
-            color: #ff6600; /* Orange text */
+        .headerItem:hover {
+            color: rgb(235, 120, 0);
+            text-decoration: none;
         }
 
         .footer {
-            background-color: #000000; /* Black background */
-            color: #ffffff; /* White text */
-            padding: 20px;
-            margin-top: 20px;
+            background-color: #222;
+            color: #fff;
+            padding: 40px 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
         }
 
         .footer__addr {
+            flex: 1 1 300px;
             margin-bottom: 20px;
         }
 
         .footer__logo {
-            font-size: 1.5em;
-            color: #ff6600; /* Orange text */
+            font-size: 24px;
+            font-weight: bold;
             margin-bottom: 10px;
         }
 
         .footer__btn {
-            color: #ff6600; /* Orange text */
+            display: inline-block;
+            margin-top: 10px;
+            color: #fff;
             text-decoration: none;
-            font-weight: bold;
+            background-color: rgb(235, 80, 0);
+            padding: 10px 15px;
+            border-radius: 5px;
         }
 
         .footer__btn:hover {
-            color: #cc5200; /* Darker orange */
+            background-color: rgb(235, 120, 0);
         }
 
         .footer__nav {
             display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
+            flex: 2 1 600px;
+            justify-content: space-between;
+            list-style: none;
+            padding: 0;
         }
 
         .nav__item {
             flex: 1;
-            min-width: 150px;
         }
 
         .nav__title {
-            font-size: 1.2em;
-            color: #ff6600; /* Orange text */
+            font-size: 18px;
             margin-bottom: 10px;
         }
 
@@ -95,47 +120,54 @@
         }
 
         .nav__ul li {
-            margin-bottom: 5px;
+            margin-bottom: 8px;
         }
 
         .nav__ul a {
-            color: #ffffff; /* White text */
+            color: #fff;
             text-decoration: none;
         }
 
         .nav__ul a:hover {
-            color: #ff6600; /* Orange text */
+            text-decoration: underline;
         }
 
         .legal {
+            flex: 1 1 100%;
             text-align: center;
             margin-top: 20px;
-            font-size: 0.9em;
         }
 
         .legal__links {
             margin-top: 10px;
         }
 
-        .legal__links .heart {
-            color: #ff6600; /* Orange heart */
+        .heart {
+            color: red;
         }
     </style>
     {% block extra_css %}{% endblock %}
-    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
-    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
   </head>
 
   <body>
     <header>
-      <div class="topBar">
-        <a href="{{ url_for('index') }}" class="logo">Holeshot Powersports</a>
-        <nav class="nav-links">
-          <a href="{{ url_for('index') }}">Home</a>
-          <a href="#">About Us</a>
-          <a href="#">Contact</a>
-          <a href="#">Shop</a>
-        </nav>
+      <div class="Topbar">
+        <img class="logo" src="{{ url_for('static', filename='images/logo2.png') }}" alt="Holeshot Powersports Logo">
+        <div class="topBarItems">
+          <select class="searchbar">
+            <option value="" disabled selected>Search...</option>
+            <option value="helmets">Helmets</option>
+            <option value="jackets">Jackets and Vests</option>
+            <option value="gloves">Gloves</option>
+            <option value="pants">Pants</option>
+            <option value="boots">Boots</option>
+            <option value="extras">Extras</option>
+          </select>
+        </div>
+        <div class="headerButtons">
+          <a class="headerItem" href="{{ url_for('login') }}">Log In/Sign Up</a>
+          <a class="headerItem" href="{{ url_for('cart') }}">Cart</a>
+        </div>
       </div>
     </header>
 
