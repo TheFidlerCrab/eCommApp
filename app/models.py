@@ -7,12 +7,9 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
     userPass = db.Column(db.String(100), nullable=False)
-    firstName = db.Column(db.String(50), nullable=False)
-    lastName = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(100), nullable=False, unique=True)
-    userPhone = db.Column(db.String(15), nullable=True)
-    ssnNum = db.Column(db.String(11), nullable=True)
     userType = db.Column(db.Integer, nullable=False)  # 0: User, 1: Admin, 2: Vendor
+    logo_path = db.Column(db.String(255))
 
 class Admin(db.Model):
     __tablename__ = 'admins'
@@ -21,8 +18,9 @@ class Admin(db.Model):
 
 class Vendor(db.Model):
     __tablename__ = 'vendors'
-    id = db.Column(db.Integer, primary_key=True)
-    userId = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True)  # Use id from users table
+    name = db.Column(db.String(100), nullable=False)  # Store name of the vendor
+    logo_path = db.Column(db.String(255), nullable=True)  # Path to vendor's logo
     products = db.relationship('Product', backref='vendor', lazy=True)
 
 class Product(db.Model):
@@ -37,14 +35,13 @@ class Product(db.Model):
 class AccountRequest(db.Model):
     __tablename__ = 'account_requests'
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), nullable=False, unique=True)
-    userPass = db.Column(db.String(100), nullable=False)
-    firstName = db.Column(db.String(50), nullable=False)
-    lastName = db.Column(db.String(50), nullable=False)
-    email = db.Column(db.String(100), nullable=False, unique=True)
-    userPhone = db.Column(db.String(15), nullable=True)
-    ssnNum = db.Column(db.String(11), nullable=True)
-    status = db.Column(db.String(20), nullable=False, default='pending')
+    username = db.Column(db.String(50), nullable=False)
+    userPass = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    userType = db.Column(db.Integer, nullable=False)  # 0 for Customer, 2 for Vendor
+    store_name = db.Column(db.String(100), nullable=True)  # Only for vendors
+    logo_path = db.Column(db.String(255), nullable=True)  # Only for vendors
+    status = db.Column(db.String(20), nullable=False, default='pending')  # 'pending', 'approved', 'rejected'
 
 class Order(db.Model):
     __tablename__ = 'orders'

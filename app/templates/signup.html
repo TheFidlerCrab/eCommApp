@@ -168,24 +168,24 @@
     <div class="right-panel">
         <form class="form-card" method="POST" action="{{ url_for('signup') }}" enctype="multipart/form-data" autocomplete="on">
             <h2>CREATE ACCOUNT</h2>
-            <label for="email">Email</label>
-            <input id="email" name="email" type="email" required autocomplete="email">
+            <label for="userType">Sign up as:</label>
+            <select id="userType" name="userType" required onchange="toggleVendorFields()">
+                <option value="Customer">Customer</option>
+                <option value="Vendor">Vendor</option>
+            </select>
             <label for="username">Username</label>
             <input id="username" name="username" type="text" required autocomplete="username">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" required autocomplete="email">
             <label for="password">Password</label>
             <input id="password" name="password" type="password" required autocomplete="new-password">
             <label for="confirm_password">Confirm Password</label>
             <input id="confirm_password" name="confirm_password" type="password" required autocomplete="new-password">
-            <label for="role">Role</label>
-            <select id="role" name="role" required onchange="toggleVendorFields()">
-                <option value="customer">Customer</option>
-                <option value="vendor">Vendor</option>
-            </select>
             <div id="vendor-fields" style="display: none;">
                 <label for="store_name">Store Name</label>
-                <input id="store_name" name="store_name" type="text" {% if request.form.get('role') == 'vendor' %}required{% endif %}>
+                <input id="store_name" name="store_name" type="text">
                 <label for="store_logo">Store Logo</label>
-                <input id="store_logo" name="store_logo" type="file" accept="image/*" {% if request.form.get('role') == 'vendor' %}required{% endif %}>
+                <input id="store_logo" name="store_logo" type="file" accept="image/*">
             </div>
             <button type="submit">Create Account</button>
             <a class="alt-link" href="{{ url_for('login') }}">Sign In</a>
@@ -194,9 +194,9 @@
 </div>
 <script>
     function toggleVendorFields() {
-        const role = document.getElementById('role').value;
+        const userType = document.getElementById('userType').value;
         const vendorFields = document.getElementById('vendor-fields');
-        vendorFields.style.display = role === 'vendor' ? 'block' : 'none';
+        vendorFields.style.display = userType === 'Vendor' ? 'block' : 'none';
     }
 </script>
 {% endblock %}
