@@ -173,15 +173,16 @@
     <section id="vendor-search">
         <h2>Search Items by Vendor</h2>
         <div class="search-container">
+            <!-- Dropdown for selecting a vendor -->
             <form method="GET" action="{{ url_for('store') }}">
-                <select name="vendor_id">
+                <select name="vendor_id" onchange="this.form.submit()">
                     <option value="" disabled selected>Select a Vendor</option>
-                    {% for vendor in vendors %}
+                    {% for vendor in all_vendors %}
                         <option value="{{ vendor.id }}">{{ vendor.name }}</option>
                     {% endfor %}
                 </select>
-                <button type="submit" class="btn">Search</button>
             </form>
+            <!-- Search bar for typing vendor name -->
             <form method="GET" action="{{ url_for('store') }}">
                 <input type="text" name="vendor_name" placeholder="Search for a vendor">
                 <button type="submit" class="btn">Search</button>

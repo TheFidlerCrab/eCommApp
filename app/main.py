@@ -67,6 +67,7 @@ def update_request(request_id):
                             "logo_path": account_request['logo_path']
                         }
                     )
+                    db.session.commit()  # Commit vendor insertion
 
                 # Remove the account request after approval
                 db.session.execute(
@@ -160,9 +161,9 @@ def user_dashboard():
         ).mappings().all()
 
         # Query to get vendors the user has purchased from
-        vendors = db.session.execute(
+        purchased_vendors = db.session.execute(
             text("""
-                SELECT DISTINCT v.name 
+                SELECT DISTINCT v.id, v.name 
                 FROM vendors v
                 JOIN products p ON v.id = p.vendorId
                 JOIN order_items oi ON p.id = oi.productId
@@ -172,7 +173,18 @@ def user_dashboard():
             {"id": user_id}
         ).mappings().all()
 
-        return render_template('userDash.html', user=user, orders=orders, vendors=vendors)
+        # Query to get all vendors for the dropdown
+        all_vendors = db.session.execute(
+            text("SELECT id, name FROM vendors")
+        ).mappings().all()
+
+        return render_template(
+            'userDash.html',
+            user=user,
+            orders=orders,
+            vendors=purchased_vendors,
+            all_vendors=all_vendors
+        )
 
     return redirect(url_for('login'))
 
@@ -328,6 +340,10 @@ def store():
             text("SELECT * FROM products WHERE vendorId = :vendor_id"),
             {"vendor_id": vendor_id}
         ).mappings().all()
+        vendor_info = db.session.execute(
+            text("SELECT name FROM vendors WHERE id = :vendor_id"),
+            {"vendor_id": vendor_id}
+        ).mappings().fetchone()
     elif vendor_name:
         # Query items by vendor name
         items = db.session.execute(
@@ -339,10 +355,12 @@ def store():
             """),
             {"vendor_name": f"%{vendor_name}%"}
         ).mappings().all()
+        vendor_info = {"name": vendor_name}
     else:
         items = []
+        vendor_info = None
 
-    return render_template('store.html', items=items)
+    return render_template('store.html', items=items, vendor=vendor_info)
 
 @app.route('/featured')
 def featured():
