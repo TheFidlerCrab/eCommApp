@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<body>
+    <h1>{{ vendor.name if vendor else "Store" }}</h1>
+    <section>
+        {% if items %}
+            <ul>
+                {% for item in items %}
+                    <li>
+                        <h2>{{ item.name }}</h2>
+                        <p>Price: ${{ item.price }}</p>
+                        <p>Stock: {{ item.stock }}</p>
+                        <img src="{{ item.image_url }}" alt="{{ item.name }}" style="max-width: 200px;">
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No products available for this vendor.</p>
+        {% endif %}
+    </section>
+</body>
+{%endblock%}

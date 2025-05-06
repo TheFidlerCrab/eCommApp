@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .user-dashboard {
+        font-family: 'Roboto', sans-serif;
+        background-color: #ffffff; /* White background */
+        width: 90%;
+        margin: 20px auto;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .user-dashboard h2 {
+        color: #ff6600; /* Orange text */
+        margin-bottom: 15px;
+    }
+
+    .user-dashboard table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    .user-dashboard th, .user-dashboard td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .user-dashboard th {
+        background: #ff6600; /* Orange background */
+        color: #ffffff; /* White text */
+    }
+
+    .user-dashboard td {
+        color: #333; /* Black text */
+    }
+
+    .user-dashboard .btn {
+        display: inline-block;
+        padding: 10px 15px;
+        background: #ff6600; /* Orange background */
+        color: #ffffff; /* White text */
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 0.9em;
+        font-weight: bold;
+        text-align: center;
+        transition: background-color 0.3s ease;
+    }
+
+    .user-dashboard .btn:hover {
+        background: #cc5200; /* Darker orange */
+    }
+
+    .user-dashboard ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .user-dashboard li {
+        margin: 10px 0;
+        padding: 10px;
+        background-color: #f9f9f9; /* Light grey background */
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .user-dashboard section {
+        margin-bottom: 20px;
+    }
+
+    .user-dashboard p {
+        font-size: 1.1em;
+        margin-bottom: 10px;
+        color: #333; /* Black text */
+    }
+
+    .user-dashboard .search-container {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 10px;
+    }
+
+    .user-dashboard .search-container select,
+    .user-dashboard .search-container input {
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 1em;
+        background-color: #f9f9f9; /* Light grey background */
+    }
+
+    .user-dashboard .search-container select:focus,
+    .user-dashboard .search-container input:focus {
+        border-color: #ff6600; /* Orange border */
+        outline: none;
+        background-color: #fff; /* White background */
+    }
+
+    .user-dashboard .search-container .btn {
+        padding: 10px 15px;
+    }
+
+    .user-dashboard .featured-btn {
+        display: inline-block;
+        margin-top: 20px;
+        padding: 12px 20px;
+        background: #ff6600; /* Orange background */
+        color: #ffffff; /* White text */
+        text-decoration: none;
+        border-radius: 5px;
+        font-size: 1em;
+        font-weight: bold;
+        text-align: center;
+        transition: background-color 0.3s ease;
+    }
+
+    .user-dashboard .featured-btn:hover {
+        background: #cc5200; /* Darker orange */
+    }
+</style>
+
+<div class="user-dashboard">
+    <section id="account-info">
+        <h2>Account Information</h2>
+        <p><strong>Name:</strong> {{ user.name }}</p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+    </section>
+
+    <section id="order-history">
+        <h2>Order History</h2>
+        {% if orders %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.id }}</td>
+                    <td>{{ order.date }}</td>
+                    <td>${{ order.total }}</td>
+                    <td>
+                        <a href="{{ url_for('view_order_items', order_id=order.id) }}" class="btn">View Items</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>No orders found.</p>
+        {% endif %}
+    </section>
+
+    <section id="purchased-vendors">
+        <h2>Purchased from Vendors</h2>
+        <ul>
+            {% for vendor in vendors %}
+                <li>{{ vendor.name }}</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section id="vendor-search">
+        <h2>Search Items by Vendor</h2>
+        <div class="search-container">
+            <!-- Dropdown for selecting a vendor -->
+            <form method="GET" action="{{ url_for('store') }}">
+                <select name="vendor_id" onchange="this.form.submit()">
+                    <option value="" disabled selected>Select a Vendor</option>
+                    {% for vendor in all_vendors %}
+                        <option value="{{ vendor.id }}">{{ vendor.name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            <!-- Search bar for typing vendor name -->
+            <form method="GET" action="{{ url_for('store') }}">
+                <input type="text" name="vendor_name" placeholder="Search for a vendor">
+                <button type="submit" class="btn">Search</button>
+            </form>
+        </div>
+    </section>
+
+    <section id="featured-items">
+        <a href="{{ url_for('featured') }}" class="featured-btn">Go to Featured Items</a>
+    </section>
+</div>
+{% endblock %}
