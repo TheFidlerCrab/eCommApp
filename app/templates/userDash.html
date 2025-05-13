@@ -140,6 +140,7 @@
                     <th>Order ID</th>
                     <th>Date</th>
                     <th>Total</th>
+                    <th>Status</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -149,8 +150,12 @@
                     <td>{{ order.id }}</td>
                     <td>{{ order.date }}</td>
                     <td>${{ order.total }}</td>
+                    <td>{{ order.status }}</td>
                     <td>
-                        <a href="{{ url_for('view_order_items', order_id=order.id) }}" class="btn">View Items</a>
+                        {% if order.status == 'rejected' %}
+                        <p style="color: red;">Rejected: {{ order.rejection_reason }}</p>
+                        {% endif %}
+                        <a href="{{ url_for('view_order_items', order_id=order.id) }}" class="btn">View Receipt</a>
                     </td>
                 </tr>
                 {% endfor %}

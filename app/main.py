@@ -203,8 +203,21 @@ def user_dashboard():
 
 @app.route('/order/<int:order_id>/items')
 def view_order_items(order_id):
-    if 'loggedin' in session and session.get('userType') == 0:  # Use session.get to avoid KeyError
+    if 'loggedin' in session and session.get('userType') == 0:  # Ensure user is logged in and is a customer
         user_id = session['userId']  # Assuming user ID is stored in the session
+
+        # Query to get order details, including rejection reason
+        order = db.session.execute(
+            text("""
+                SELECT o.id, o.status, o.rejection_reason, o.totalAmount, o.orderDate
+                FROM orders o
+                WHERE o.id = :order_id AND o.userId = :user_id
+            """),
+            {"order_id": order_id, "user_id": user_id}
+        ).mappings().fetchone()
+
+        if not order:
+            return redirect(url_for('user_dashboard', message="Order not found"))
 
         # Query to get items in the order, including image URL
         order_items = db.session.execute(
@@ -212,21 +225,37 @@ def view_order_items(order_id):
                 SELECT p.name AS product_name, oi.quantity, oi.price, p.image_url 
                 FROM order_items oi
                 JOIN products p ON oi.productId = p.id
-                WHERE oi.orderId = :order_id AND EXISTS (
-                    SELECT 1 FROM orders o WHERE o.id = :order_id AND o.userId = :user_id
-                )
+                WHERE oi.orderId = :order_id
             """),
-            {"order_id": order_id, "user_id": user_id}
+            {"order_id": order_id}
         ).mappings().all()
 
-        return render_template('orderItems.html', order_items=order_items, order_id=order_id)
+        return render_template('orderItems.html', order=order, order_items=order_items)
 
     return redirect(url_for('login'))
 
-@app.route('/vendor/dashboard')
+@app.route('/vendor/dashboard', methods=['GET', 'POST'])
 def vendor_dashboard():
-    if 'loggedin' in session and session.get('userType') == 2:  # Use session.get to avoid KeyError
-        vendor_id = session['userId']  # Assuming vendor ID is stored in the session
+    if 'loggedin' in session and session.get('userType') == 2:  # Ensure vendor is logged in
+        vendor_id = session['userId']
+
+        if request.method == 'POST':  # Handle order approval or rejection
+            order_id = request.form.get('order_id')
+            action = request.form.get('action')
+
+            if action == 'approve':
+                db.session.execute(
+                    text("UPDATE orders SET status = 'approved', rejection_reason = NULL WHERE id = :order_id"),
+                    {"order_id": order_id}
+                )
+            elif action == 'reject':
+                rejection_reason = request.form.get('rejection_reason')
+                db.session.execute(
+                    text("UPDATE orders SET status = 'rejected', rejection_reason = :rejection_reason WHERE id = :order_id"),
+                    {"order_id": order_id, "rejection_reason": rejection_reason}
+                )
+            db.session.commit()
+            return redirect(url_for('vendor_dashboard'))
 
         # Query to get vendor's store name
         vendor_store_name = db.session.execute(
@@ -236,17 +265,19 @@ def vendor_dashboard():
 
         # Query to get vendor's items
         items = db.session.execute(
-            text("SELECT id, name, price, stock FROM products WHERE vendorId = :vendor_id"),
+            text("SELECT id, name, price, image_url, stock FROM products WHERE vendorId = :vendor_id"),
             {"vendor_id": vendor_id}
         ).mappings().all()
 
-        # Query to get vendor's orders
+        # Query to get vendor's orders with customer details
         orders = db.session.execute(
             text("""
-                SELECT o.id, o.orderDate AS date, o.totalAmount AS total 
+                SELECT o.id, u.username AS customer, SUM(oi.quantity) AS quantity, 
+                       o.totalAmount AS total, o.status
                 FROM orders o
                 JOIN order_items oi ON o.id = oi.orderId
                 JOIN products p ON oi.productId = p.id
+                JOIN users u ON o.userId = u.id
                 WHERE p.vendorId = :vendor_id
                 GROUP BY o.id
             """),
@@ -272,11 +303,11 @@ def vendor_dashboard():
 
         return render_template(
             'vendorDash.html',
-            vendor_name=vendor_store_name,  # Pass the store name instead of the username
+            vendor_name=vendor_store_name,
             items=items,
             orders=orders,
             total_revenue=total_revenue or 0,
-            vendor_logo=vendor_logo  # Pass the logo path to the template
+            vendor_logo=vendor_logo
         )
 
     return redirect(url_for('login'))
@@ -373,7 +404,7 @@ def store():
         items = []
         vendor_info = None
 
-    return render_template('store.html', items=items, vendor=vendor_info)
+    return render_template('store.html', items=items, vendor=vendor_info, vendor_id=vendor_id)
 
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
 def add_to_cart(product_id):
@@ -394,15 +425,60 @@ def add_to_cart(product_id):
         return redirect(url_for('store', vendor_id=request.args.get('vendor_id')))
     return redirect(url_for('login'))
 
-@app.route('/cart')
+@app.route('/cart', methods=['GET', 'POST'])
 def cart():
     if 'loggedin' in session and session.get('userType') == 0:  # Ensure user is logged in and is a customer
-        user_id = session['userId']  # Assuming user ID is stored in the session
+        user_id = session['userId']
+
+        if request.method == 'POST':  # Handle checkout
+            # Create a new order
+            total_price = request.form.get('total_price')
+            order_id = db.session.execute(
+                text("""
+                    INSERT INTO orders (userId, orderDate, totalAmount, status)
+                    VALUES (:user_id, NOW(), :total_price, 'pending')
+                """),
+                {"user_id": user_id, "total_price": total_price}
+            ).lastrowid
+
+            # Add items to the order
+            cart_items = db.session.execute(
+                text("""
+                    SELECT productId, quantity, p.price
+                    FROM cart_items ci
+                    JOIN products p ON ci.productId = p.id
+                    WHERE ci.userId = :user_id
+                """),
+                {"user_id": user_id}
+            ).mappings().all()
+
+            for item in cart_items:
+                db.session.execute(
+                    text("""
+                        INSERT INTO order_items (orderId, productId, quantity, price)
+                        VALUES (:order_id, :product_id, :quantity, :price)
+                    """),
+                    {
+                        "order_id": order_id,
+                        "product_id": item['productId'],
+                        "quantity": item['quantity'],
+                        "price": item['price']
+                    }
+                )
+
+            # Clear the cart
+            db.session.execute(
+                text("DELETE FROM cart_items WHERE userId = :user_id"),
+                {"user_id": user_id}
+            )
+            db.session.commit()
+
+            return redirect(url_for('user_dashboard', message="Order placed successfully"))
 
         # Query to get cart items for the user
         cart_items = db.session.execute(
             text("""
-                SELECT ci.quantity, p.name, p.price, p.image_url 
+                SELECT ci.quantity, p.name, p.price, p.image_url, ci.productId
                 FROM cart_items ci
                 JOIN products p ON ci.productId = p.id
                 WHERE ci.userId = :user_id
@@ -417,9 +493,98 @@ def cart():
 
     return redirect(url_for('login'))
 
-@app.route('/featured')
+@app.route('/featured', methods=['GET', 'POST'])
 def featured():
-    return render_template('Featured.html')
+    if request.method == 'POST':
+        if 'loggedin' in session and session.get('userType') == 0:  # Ensure user is logged in and is a customer
+            user_id = session['userId']
+            product_id = request.form.get('product_id')
+
+            # Validate that the product exists in the products table
+            product_exists = db.session.execute(
+                text("SELECT id FROM products WHERE id = :product_id"),
+                {"product_id": product_id}
+            ).scalar()
+
+            if not product_exists:
+                return redirect(url_for('featured', error="Product does not exist"))
+
+            # Add the product to the cart
+            db.session.execute(
+                text("""
+                    INSERT INTO cart_items (userId, productId, quantity)
+                    VALUES (:user_id, :product_id, 1)
+                    ON DUPLICATE KEY UPDATE quantity = quantity + 1
+                """),
+                {
+                    "user_id": user_id,
+                    "product_id": product_id
+                }
+            )
+            db.session.commit()
+            return redirect(url_for('featured'))
+
+        return redirect(url_for('login'))
+
+    # Fetch featured items grouped by categories
+    featured_items = db.session.execute(
+        text("""
+            SELECT category, id, name, price, image_url
+            FROM products
+            WHERE id IN (3, 4, 5, 6, 7, 8, 9, 10, 11, 12)  -- Replace with actual featured product IDs
+            ORDER BY category
+        """)
+    ).mappings()
+
+    # Organize items by category
+    categorized_items = {}
+    for item in featured_items:
+        category = item['category']
+        if category not in categorized_items:
+            categorized_items[category] = []
+        categorized_items[category].append(item)
+
+    return render_template('Featured.html', categorized_items=categorized_items)
+
+@app.route('/vendor/orders', methods=['GET', 'POST'])
+def vendor_orders():
+    if 'loggedin' in session and session.get('userType') == 2:  # Ensure vendor is logged in
+        vendor_id = session['userId']
+
+        if request.method == 'POST':  # Handle order status updates
+            order_id = request.form.get('order_id')
+            action = request.form.get('action')
+
+            if action == 'ship':
+                db.session.execute(
+                    text("UPDATE orders SET status = 'shipped' WHERE id = :order_id"),
+                    {"order_id": order_id}
+                )
+            elif action == 'deliver':
+                db.session.execute(
+                    text("UPDATE orders SET status = 'delivered' WHERE id = :order_id"),
+                    {"order_id": order_id}
+                )
+            db.session.commit()
+            return redirect(url_for('vendor_orders'))
+
+        # Query to get orders for the vendor
+        orders = db.session.execute(
+            text("""
+                SELECT o.id, o.orderDate, o.totalAmount, o.status, u.username AS customer
+                FROM orders o
+                JOIN order_items oi ON o.id = oi.orderId
+                JOIN products p ON oi.productId = p.id
+                JOIN users u ON o.userId = u.id
+                WHERE p.vendorId = :vendor_id
+                GROUP BY o.id
+            """),
+            {"vendor_id": vendor_id}
+        ).mappings().all()
+
+        return render_template('vendorOrders.html', orders=orders)
+
+    return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

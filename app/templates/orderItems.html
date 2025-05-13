@@ -68,23 +68,64 @@
         margin-bottom: 10px;
         color: #333; /* Black text */
     }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+
+    th {
+        background-color: #f2f2f2;
+        color: #333;
+    }
+
+    td img {
+        vertical-align: middle;
+    }
 </style>
 
+<div class="order-details">
+    <h2>Order Details</h2>
+    <p><strong>Order ID:</strong> {{ order.id }}</p>
+    <p><strong>Date:</strong> {{ order.orderDate }}</p>
+    <p><strong>Total Amount:</strong> ${{ order.totalAmount }}</p>
+    <p><strong>Status:</strong> {{ order.status }}</p>
+    {% if order.status == 'rejected' %}
+    <p style="color: red;"><strong>Rejection Reason:</strong> {{ order.rejection_reason }}</p>
+    {% endif %}
+</div>
+
 <div class="order-items">
-    <h2>Order Items</h2>
-    <p><strong>Order Number:</strong> {{ order_id }}</p>
-    <ul>
-        {% for item in order_items %}
-            <li>
-                <img src="{{ item.image_url }}" alt="{{ item.product_name }}" class="product-image">
-                <div>
-                    <strong>{{ item.product_name }}</strong><br>
-                    Quantity: {{ item.quantity }}<br>
-                    Price: ${{ item.price }}
-                </div>
-            </li>
-        {% endfor %}
-    </ul>
-    <a href="{{ url_for('user_dashboard') }}" class="btn">Back to Dashboard</a>
+    <h3>Items in this Order</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order_items %}
+            <tr>
+                <td>
+                    <img src="{{ item.image_url }}" alt="{{ item.product_name }}" style="width: 50px; height: 50px; margin-right: 10px;">
+                    {{ item.product_name }}
+                </td>
+                <td>{{ item.quantity }}</td>
+                <td>${{ item.price }}</td>
+                <td>${{ item.quantity * item.price }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}
