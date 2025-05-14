@@ -2,9 +2,8 @@
 
 {% block content %}
 <style>
-    body {
+    .order-items-page {
         font-family: 'Roboto', sans-serif;
-        background-color: #ffffff; /* White background */
         margin: 0;
         padding: 0;
     }
@@ -33,17 +32,8 @@
         align-items: center;
         margin: 10px 0;
         padding: 10px;
-        background-color: #f9f9f9; /* Light grey background */
         border: 1px solid #ddd;
         border-radius: 5px;
-    }
-
-    .product-image {
-        width: 100px;
-        height: auto;
-        margin-right: 15px;
-        border-radius: 5px;
-        border: 1px solid #ddd;
     }
 
     .btn {
@@ -61,12 +51,6 @@
 
     .btn:hover {
         background: #cc5200; /* Darker orange */
-    }
-
-    p {
-        font-size: 1.1em;
-        margin-bottom: 10px;
-        color: #333; /* Black text */
     }
 
     table {
@@ -91,41 +75,43 @@
     }
 </style>
 
-<div class="order-details">
-    <h2>Order Details</h2>
-    <p><strong>Order ID:</strong> {{ order.id }}</p>
-    <p><strong>Date:</strong> {{ order.orderDate }}</p>
-    <p><strong>Total Amount:</strong> ${{ order.totalAmount }}</p>
-    <p><strong>Status:</strong> {{ order.status }}</p>
-    {% if order.status == 'rejected' %}
-    <p style="color: red;"><strong>Rejection Reason:</strong> {{ order.rejection_reason }}</p>
-    {% endif %}
-</div>
+<div class="order-items-page">
+    <div class="order-details">
+        <h2>Order Details</h2>
+        <p><strong>Order ID:</strong> {{ order.id }}</p>
+        <p><strong>Date:</strong> {{ order.orderDate }}</p>
+        <p><strong>Total Amount:</strong> ${{ order.totalAmount }}</p>
+        <p><strong>Status:</strong> {{ order.status }}</p>
+        {% if order.status == 'rejected' %}
+        <p style="color: red;"><strong>Rejection Reason:</strong> {{ order.rejection_reason }}</p>
+        {% endif %}
+    </div>
 
-<div class="order-items">
-    <h3>Items in this Order</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Price</th>
-                <th>Subtotal</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in order_items %}
-            <tr>
-                <td>
-                    <img src="{{ item.image_url }}" alt="{{ item.product_name }}" style="width: 50px; height: 50px; margin-right: 10px;">
-                    {{ item.product_name }}
-                </td>
-                <td>{{ item.quantity }}</td>
-                <td>${{ item.price }}</td>
-                <td>${{ item.quantity * item.price }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="order-items">
+        <h3>Items in this Order</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order_items %}
+                <tr>
+                    <td>
+                        <img src="{{ item.image_url }}" alt="{{ item.product_name }}" style="width: 50px; height: 50px; margin-right: 10px;">
+                        {{ item.product_name }}
+                    </td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.unit_price }}</td>
+                    <td>${{ item.quantity * item.unit_price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endblock %}

@@ -219,13 +219,15 @@ def view_order_items(order_id):
         if not order:
             return redirect(url_for('user_dashboard', message="Order not found"))
 
-        # Query to get items in the order, including image URL
+        # Query to get items in the order, grouped by product
         order_items = db.session.execute(
             text("""
-                SELECT p.name AS product_name, oi.quantity, oi.price, p.image_url 
+                SELECT p.name AS product_name, SUM(oi.quantity) AS quantity, 
+                       p.price AS unit_price, p.image_url
                 FROM order_items oi
                 JOIN products p ON oi.productId = p.id
                 WHERE oi.orderId = :order_id
+                GROUP BY p.name, p.price, p.image_url
             """),
             {"order_id": order_id}
         ).mappings().all()
@@ -244,17 +246,57 @@ def vendor_dashboard():
             action = request.form.get('action')
 
             if action == 'approve':
+                # Approve the order and update stock
+                order_items = db.session.execute(
+                    text("""
+                        SELECT oi.productId, oi.quantity, oi.price, p.stock
+                        FROM order_items oi
+                        JOIN products p ON oi.productId = p.id
+                        WHERE oi.orderId = :order_id
+                    """),
+                    {"order_id": order_id}
+                ).mappings().all()
+
+                for item in order_items:
+                    # Reduce stock
+                    db.session.execute(
+                        text("UPDATE products SET stock = stock - :quantity WHERE id = :product_id"),
+                        {"quantity": item['quantity'], "product_id": item['productId']}
+                    )
+
+                # Update order status
                 db.session.execute(
                     text("UPDATE orders SET status = 'approved', rejection_reason = NULL WHERE id = :order_id"),
                     {"order_id": order_id}
                 )
+                db.session.commit()
+
             elif action == 'reject':
+                # Reject the order and restore stock
                 rejection_reason = request.form.get('rejection_reason')
+                order_items = db.session.execute(
+                    text("""
+                        SELECT oi.productId, oi.quantity
+                        FROM order_items oi
+                        WHERE oi.orderId = :order_id
+                    """),
+                    {"order_id": order_id}
+                ).mappings().all()
+
+                for item in order_items:
+                    # Restore stock
+                    db.session.execute(
+                        text("UPDATE products SET stock = stock + :quantity WHERE id = :product_id"),
+                        {"quantity": item['quantity'], "product_id": item['productId']}
+                    )
+
+                # Update order status
                 db.session.execute(
                     text("UPDATE orders SET status = 'rejected', rejection_reason = :rejection_reason WHERE id = :order_id"),
                     {"order_id": order_id, "rejection_reason": rejection_reason}
                 )
-            db.session.commit()
+                db.session.commit()
+
             return redirect(url_for('vendor_dashboard'))
 
         # Query to get vendor's store name
@@ -411,7 +453,7 @@ def add_to_cart(product_id):
     if 'loggedin' in session and session.get('userType') == 0:  # Ensure user is logged in and is a customer
         user_id = session['userId']  # Assuming user ID is stored in the session
 
-        # Add the product to the cart
+        # Add the product to the cart or update the quantity if it already exists
         db.session.execute(
             text("""
                 INSERT INTO cart_items (userId, productId, quantity)
@@ -430,9 +472,33 @@ def cart():
     if 'loggedin' in session and session.get('userType') == 0:  # Ensure user is logged in and is a customer
         user_id = session['userId']
 
+        # Query to get cart items for the user
+        cart_items = db.session.execute(
+            text("""
+                SELECT p.id AS productId, p.name, p.price, p.image_url, SUM(ci.quantity) AS quantity
+                FROM cart_items ci
+                JOIN products p ON ci.productId = p.id
+                WHERE ci.userId = :user_id
+                GROUP BY p.id, p.name, p.price, p.image_url
+            """),
+            {"user_id": user_id}
+        ).mappings().all()
+
+        # Calculate total price
+        total_price = sum(item['quantity'] * item['price'] for item in cart_items)
+
         if request.method == 'POST':  # Handle checkout
+            payment_method = request.form.get('payment_method')
+            card_number = request.form.get('card_number')
+            paypal_email = request.form.get('paypal_email')
+
+            # Validate payment information
+            if payment_method == 'credit_card' and not card_number:
+                return render_template('cart.html', cart_items=cart_items, total_price=total_price, error="Credit card number is required.")
+            if payment_method == 'paypal' and not paypal_email:
+                return render_template('cart.html', cart_items=cart_items, total_price=total_price, error="PayPal email is required.")
+
             # Create a new order
-            total_price = request.form.get('total_price')
             order_id = db.session.execute(
                 text("""
                     INSERT INTO orders (userId, orderDate, totalAmount, status)
@@ -442,16 +508,6 @@ def cart():
             ).lastrowid
 
             # Add items to the order
-            cart_items = db.session.execute(
-                text("""
-                    SELECT productId, quantity, p.price
-                    FROM cart_items ci
-                    JOIN products p ON ci.productId = p.id
-                    WHERE ci.userId = :user_id
-                """),
-                {"user_id": user_id}
-            ).mappings().all()
-
             for item in cart_items:
                 db.session.execute(
                     text("""
@@ -462,7 +518,7 @@ def cart():
                         "order_id": order_id,
                         "product_id": item['productId'],
                         "quantity": item['quantity'],
-                        "price": item['price']
+                        "price": item['quantity'] * item['price']
                     }
                 )
 
@@ -473,21 +529,7 @@ def cart():
             )
             db.session.commit()
 
-            return redirect(url_for('user_dashboard', message="Order placed successfully"))
-
-        # Query to get cart items for the user
-        cart_items = db.session.execute(
-            text("""
-                SELECT ci.quantity, p.name, p.price, p.image_url, ci.productId
-                FROM cart_items ci
-                JOIN products p ON ci.productId = p.id
-                WHERE ci.userId = :user_id
-            """),
-            {"user_id": user_id}
-        ).mappings().all()
-
-        # Calculate total price
-        total_price = sum(item['quantity'] * item['price'] for item in cart_items)
+            return redirect(url_for('user_dashboard', message="Order placed successfully. Awaiting vendor approval."))
 
         return render_template('cart.html', cart_items=cart_items, total_price=total_price)
 

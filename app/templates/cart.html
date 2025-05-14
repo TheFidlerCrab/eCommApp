@@ -1,97 +1,184 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Cart</title>
-    <style>
-        .cart-container {
-            max-width: 800px;
-            margin: 20px auto;
-            font-family: 'Roboto', sans-serif;
-        }
+{% extends "base.html" %}
 
-        .cart-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+{% block title %}Your Cart - Holeshot Powersports{% endblock %}
 
-        .cart-items {
-            border-collapse: collapse;
-            width: 100%;
-        }
+{% block content %}
+<style>
+    .cart-container {
+        max-width: 800px;
+        margin: 20px auto;
+        font-family: 'Roboto', sans-serif;
+        background: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
 
-        .cart-items th, .cart-items td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
+    .cart-header {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #ff6600;
+        font-size: 1.8em;
+        font-weight: bold;
+    }
 
-        .cart-items th {
-            background-color: #f4f4f4;
-        }
+    .cart-items {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
 
-        .total-price {
-            text-align: right;
-            margin-top: 20px;
-            font-size: 1.2em;
-            font-weight: bold;
-        }
+    .cart-items th, .cart-items td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+    }
 
-        .btn {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-        }
+    .cart-items th {
+        background-color: #f4f4f4;
+        color: #333;
+    }
 
-        .btn:hover {
-            background-color: #0056b3;
-        }
-    </style>
-</head>
-<body>
-    <div class="cart-container">
-        <h1 class="cart-header">Your Cart</h1>
-        {% if cart_items %}
-        <form method="POST" action="{{ url_for('cart') }}">
-            <table class="cart-items">
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Price</th>
-                        <th>Quantity</th>
-                        <th>Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in cart_items %}
-                    <tr>
-                        <td>
-                            <img src="{{ item.image_url }}" alt="{{ item.name }}" style="width: 50px; height: 50px; margin-right: 10px;">
-                            {{ item.name }}
-                        </td>
-                        <td>${{ item.price }}</td>
-                        <td>{{ item.quantity }}</td>
-                        <td>${{ item.quantity * item.price }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-            <div class="total-price">
-                Total: ${{ total_price }}
+    .cart-items td img {
+        width: 50px;
+        height: 50px;
+        margin-right: 10px;
+        vertical-align: middle;
+    }
+
+    .total-price {
+        text-align: right;
+        margin-top: 20px;
+        font-size: 1.2em;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .payment-section {
+        margin-top: 30px;
+    }
+
+    .payment-section h3 {
+        color: #ff6600;
+        margin-bottom: 15px;
+    }
+
+    .payment-method {
+        margin-bottom: 20px;
+    }
+
+    .payment-method label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .payment-method input[type="text"],
+    .payment-method input[type="email"],
+    .payment-method input[type="number"] {
+        width: 100%;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+        background-color: #f9f9f9;
+    }
+
+    .payment-method input:focus {
+        border-color: #ff6600;
+        outline: none;
+        background-color: #fff;
+    }
+
+    .btn {
+        display: block;
+        width: 100%;
+        padding: 12px;
+        background-color: #ff6600;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        font-size: 1em;
+        font-weight: bold;
+        cursor: pointer;
+        text-align: center;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn:hover {
+        background-color: #cc5200;
+    }
+
+    .error {
+        color: red;
+        font-size: 0.9em;
+        margin-bottom: 10px;
+    }
+</style>
+
+<div class="cart-container">
+    <h1 class="cart-header">Your Cart</h1>
+    {% if cart_items %}
+    <form method="POST" action="{{ url_for('cart') }}">
+        <table class="cart-items">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                <tr>
+                    <td>
+                        <img src="{{ item.image_url }}" alt="{{ item.name }}">
+                        {{ item.name }}
+                    </td>
+                    <td>${{ item.price }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>${{ item.quantity * item.price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="total-price">
+            Total: ${{ total_price }}
+        </div>
+        <input type="hidden" name="total_price" value="{{ total_price }}">
+
+        <div class="payment-section">
+            <h3>Payment Information</h3>
+            <div class="payment-method">
+                <label>
+                    <input type="radio" name="payment_method" value="credit_card" required>
+                    Credit Card
+                </label>
+                <input type="text" name="card_number" placeholder="Card Number">
+                <input type="text" name="expiration_date" placeholder="Expiration Date (MM/YY)">
+                <input type="text" name="cvv" placeholder="CVV">
             </div>
-            <input type="hidden" name="total_price" value="{{ total_price }}">
-            <button type="submit" class="btn">Checkout</button>
-        </form>
-        {% else %}
-        <p>Your cart is empty.</p>
+            <div class="payment-method">
+                <label>
+                    <input type="radio" name="payment_method" value="paypal" required>
+                    PayPal
+                </label>
+                <input type="email" name="paypal_email" placeholder="PayPal Email">
+                <input type="password" name="paypal_password" placeholder="PayPal Password">
+            </div>
+        </div>
+
+        {% if error %}
+        <p class="error">{{ error }}</p>
         {% endif %}
-    </div>
-</body>
-</html>
+
+        <button type="submit" class="btn">Checkout</button>
+    </form>
+    {% else %}
+    <p>Your cart is empty.</p>
+    {% endif %}
+</div>
+{% endblock %}
