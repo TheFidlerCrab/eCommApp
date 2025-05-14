@@ -31,7 +31,7 @@ class Product(db.Model):
     stock = db.Column(db.Integer, nullable=False)
     vendorId = db.Column(db.Integer, db.ForeignKey('vendors.id'), nullable=False)
     image_url = db.Column(db.String(255), nullable=True)
-    category = db.Column(db.String(50), nullable=False)
+    category = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(20), nullable=False, default='active')  # Ensure this column exists
 
 class AccountRequest(db.Model):
