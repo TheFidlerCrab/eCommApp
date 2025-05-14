@@ -31,7 +31,8 @@ class Product(db.Model):
     stock = db.Column(db.Integer, nullable=False)
     vendorId = db.Column(db.Integer, db.ForeignKey('vendors.id'), nullable=False)
     image_url = db.Column(db.String(255), nullable=True)
-    category = db.Column(db.String(50), nullable=False)  # Add category column
+    category = db.Column(db.String(50), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default='active')  # Ensure this column exists
 
 class AccountRequest(db.Model):
     __tablename__ = 'account_requests'
@@ -52,7 +53,6 @@ class Order(db.Model):
     totalAmount = db.Column(db.Numeric(10, 2), nullable=False)
     items = db.relationship('OrderItem', backref='order', lazy=True)
     status = db.Column(db.String(20), nullable=False, default='pending')  # 'pending', 'shipped', 'delivered'
-    rejection_reason = db.Column(db.String(255), nullable=True)  # Reason for rejection if the order is canceled
 
 class OrderItem(db.Model):
     __tablename__ = 'order_items'

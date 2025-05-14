@@ -154,14 +154,6 @@
       <div class="Topbar">
         <img class="logo" src="{{ url_for('static', filename='images/logo2.png') }}" alt="Holeshot Powersports Logo">
         <div class="topBarItems">
-          <form method="GET" action="{{ url_for('store') }}" style="display: inline;">
-            <select name="category" onchange="this.form.submit()" style="padding: 10px; border-radius: 5px; border: 1px solid #ddd;">
-              <option value="" disabled selected>Filter by Category</option>
-              {% for cat in categories %}
-              <option value="{{ cat }}" {% if request.args.get('category') == cat %}selected{% endif %}>{{ cat }}</option>
-              {% endfor %}
-            </select>
-          </form>
         </div>
         <div class="headerButtons">
           <a class="headerItem" href="{{ url_for('login') }}">Log In/Sign Up</a>

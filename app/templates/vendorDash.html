@@ -184,9 +184,18 @@
                     <h5 class="card-title">{{ item.name }}</h5>
                     <p class="card-text">Price: ${{ item.price }}</p>
                     <p class="card-text">Stock: {{ item.stock }}</p>
+                    <p class="card-text">Status: {{ item.status }}</p>
                     {% if not item.stock %}
                     <p class="card-text" style="color: red;">Out of Stock</p>
                     {% endif %}
+                    <form method="POST" action="{{ url_for('update_stock', product_id=item.id) }}">
+                        <label for="new_stock_{{ item.id }}">Adjust Stock:</label>
+                        <input type="number" id="new_stock_{{ item.id }}" name="new_stock" min="0" value="{{ item.stock }}" required>
+                        <button type="submit" class="btn">Update Stock</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('delete_product', product_id=item.id) }}" style="margin-top: 10px;">
+                        <button type="submit" class="btn" style="background: red;">Delete</button>
+                    </form>
                 </div>
             </div>
             {% endfor %}
@@ -245,7 +254,12 @@
             <label for="price">Price:</label>
             <input type="number" id="price" name="price" step="0.01" required>
             <label for="stock">Stock:</label>
-            <input type="number" id="stock" name="stock" required>
+            <input type="number" id="stock" name="stock" min="0" required>
+            <label for="status">Status:</label>
+            <select id="status" name="status" required>
+                <option value="active" selected>Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
             <label for="image">Image:</label>
             <input type="file" id="image" name="image" accept="image/*" required>
             <button type="submit">Add Item</button>

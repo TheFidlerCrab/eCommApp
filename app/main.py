@@ -158,7 +158,7 @@ def remove_user(user_id):
 
 @app.route('/user/dashboard')
 def user_dashboard():
-    if 'loggedin' in session and session.get('userType') == 0:  # Use session.get to avoid KeyError
+    if 'loggedin' in session and session.get('userType') == 0:  # Ensure user is logged in and is a customer
         user_id = session['userId']  # Assuming user ID is stored in the session
 
         # Query to get user information
@@ -167,9 +167,9 @@ def user_dashboard():
             {"id": user_id}
         ).mappings().fetchone()
 
-        # Query to get order history
+        # Query to get order history, including status
         orders = db.session.execute(
-            text("SELECT id, orderDate AS date, totalAmount AS total FROM orders WHERE userId = :id"),
+            text("SELECT id, orderDate AS date, totalAmount AS total, status FROM orders WHERE userId = :id"),
             {"id": user_id}
         ).mappings().all()
 
@@ -305,9 +305,13 @@ def vendor_dashboard():
             {"vendor_id": vendor_id}
         ).scalar()
 
-        # Query to get vendor's items
+        # Query to get vendor's active items
         items = db.session.execute(
-            text("SELECT id, name, price, image_url, stock FROM products WHERE vendorId = :vendor_id"),
+            text("""
+                SELECT id, name, price, image_url, stock, status 
+                FROM products 
+                WHERE vendorId = :vendor_id AND status = 'active'
+            """),
             {"vendor_id": vendor_id}
         ).mappings().all()
 
@@ -356,7 +360,7 @@ def vendor_dashboard():
 
 @app.route('/add_item', methods=['POST'])
 def add_item():
-    if 'loggedin' in session and session.get('userType') == 2:  # Use session.get to avoid KeyError
+    if 'loggedin' in session and session.get('userType') == 2:  # Ensure vendor is logged in
         vendor_id = session['userId']  # Assuming vendor ID is stored in the session
 
         # Verify that the vendor exists in the users table
@@ -371,6 +375,7 @@ def add_item():
         name = request.form['name']
         price = request.form['price']
         stock = request.form['stock']
+        status = request.form['status']  # Get the status from the form
         image = request.files['image']
 
         if image and allowed_file(image.filename):
@@ -384,12 +389,70 @@ def add_item():
 
             # Insert new item into the database
             db.session.execute(
-                text("INSERT INTO products (name, price, stock, vendorId, image_url) VALUES (:name, :price, :stock, :vendor_id, :image_url)"),
-                {"name": name, "price": price, "stock": stock, "vendor_id": vendor_id, "image_url": f'/static/uploads/vendor_{vendor_id}/{filename}'}
+                text("""
+                    INSERT INTO products (name, price, stock, vendorId, image_url, status)
+                    VALUES (:name, :price, :stock, :vendor_id, :image_url, :status)
+                """),
+                {
+                    "name": name,
+                    "price": price,
+                    "stock": stock,
+                    "vendor_id": vendor_id,
+                    "image_url": f'/static/uploads/vendor_{vendor_id}/{filename}',
+                    "status": status
+                }
             )
             db.session.commit()
 
             return redirect(url_for('vendor_dashboard', message="Item added successfully"))
+
+    return redirect(url_for('login'))
+
+@app.route('/delete_product/<int:product_id>', methods=['POST'])
+def delete_product(product_id):
+    if 'loggedin' in session and session.get('userType') == 2:  # Ensure vendor is logged in
+        vendor_id = session['userId']
+
+        # Verify that the product belongs to the logged-in vendor
+        product = db.session.execute(
+            text("SELECT id FROM products WHERE id = :product_id AND vendorId = :vendor_id"),
+            {"product_id": product_id, "vendor_id": vendor_id}
+        ).fetchone()
+
+        if product:
+            # Mark the product as inactive
+            db.session.execute(
+                text("UPDATE products SET status = 'inactive' WHERE id = :product_id"),
+                {"product_id": product_id}
+            )
+            db.session.commit()
+            return redirect(url_for('vendor_dashboard', message="Product marked as inactive"))
+
+    return redirect(url_for('login'))
+
+@app.route('/update_stock/<int:product_id>', methods=['POST'])
+def update_stock(product_id):
+    if 'loggedin' in session and session.get('userType') == 2:  # Ensure vendor is logged in
+        vendor_id = session['userId']
+
+        # Verify that the product belongs to the logged-in vendor
+        product = db.session.execute(
+            text("SELECT id FROM products WHERE id = :product_id AND vendorId = :vendor_id"),
+            {"product_id": product_id, "vendor_id": vendor_id}
+        ).fetchone()
+
+        if product:
+            # Update the stock of the product
+            new_stock = request.form.get('new_stock')
+            if new_stock.isdigit() and int(new_stock) >= 0:
+                db.session.execute(
+                    text("UPDATE products SET stock = :new_stock WHERE id = :product_id"),
+                    {"new_stock": int(new_stock), "product_id": product_id}
+                )
+                db.session.commit()
+                return redirect(url_for('vendor_dashboard', message="Stock updated successfully"))
+            else:
+                return redirect(url_for('vendor_dashboard', message="Invalid stock value"))
 
     return redirect(url_for('login'))
 
@@ -421,9 +484,9 @@ def store():
     vendor_name = request.args.get('vendor_name')
 
     if vendor_id:
-        # Query items by vendor ID
+        # Query active items by vendor ID
         items = db.session.execute(
-            text("SELECT * FROM products WHERE vendorId = :vendor_id"),
+            text("SELECT * FROM products WHERE vendorId = :vendor_id AND status = 'active'"),
             {"vendor_id": vendor_id}
         ).mappings().all()
         vendor_info = db.session.execute(
@@ -431,13 +494,13 @@ def store():
             {"vendor_id": vendor_id}
         ).mappings().fetchone()
     elif vendor_name:
-        # Query items by vendor name
+        # Query active items by vendor name
         items = db.session.execute(
             text("""
                 SELECT p.* 
                 FROM products p
                 JOIN vendors v ON p.vendorId = v.id
-                WHERE v.name LIKE :vendor_name
+                WHERE v.name LIKE :vendor_name AND p.status = 'active'
             """),
             {"vendor_name": f"%{vendor_name}%"}
         ).mappings().all()
